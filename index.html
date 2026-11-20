@@ -98,6 +98,7 @@ img{max-width:none;-webkit-user-drag:none}
 .chrib .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .slots{display:flex;gap:2px;align-items:center}
 .slots img{width:24px;height:24px}
+.slots img[src*=empty]{opacity:.5;filter:grayscale(.6) brightness(.8)}
 .slots img.pop{animation:spop .5s cubic-bezier(.3,1.8,.5,1)}
 @keyframes spop{from{transform:scale(2.2)}}
 .chsub{text-align:center;margin-top:4px;font-size:12px;font-weight:800;color:#fff3dc;text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.08em}
