@@ -1,0 +1,1148 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>碎影 Torn Portraits</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Playfair+Display:ital,wght@0,700;0,800;1,500&family=Nunito:wght@700;800;900&family=Caveat:wght@600&display=swap">
+<style>
+/* Look: warm coastal heirloom mystery. Painted parts (ui/) carry material; CSS only lays out, adds hairlines and motion.
+   One center axis, 8px steps. Primary action = sea-green plate, reveal/unlock = champagne gold, secondary = cream. */
+:root{
+  --ink:#2a2622; --ink2:#5b4a3c; --ink-soft:rgba(42,38,34,.62);
+  --cream:#faf3e6; --paper:#fffaf0; --walnut:#5c3d2e; --brass:#c99a4e; --brass-d:#9a7232;
+  --green:#2fa56e; --coral:#e2553f; --gold:#f2b23a; --teal:#1f5560; --night:#121a24;
+  --serif:"Playfair Display","Noto Serif SC","Songti SC","STSong",serif;
+  --cn-serif:"Noto Serif SC","Songti SC","STSong",serif;
+  --body:"Nunito",-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --hand:"Caveat","Kaiti SC","STKaiti",cursive;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:#0d1219;color:var(--ink);font-family:var(--body);font-size:15px;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#app{position:relative;height:100%;max-width:460px;margin:0 auto;overflow:hidden;background:var(--night)}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+h1,h2,h3{margin:0;font-weight:900;text-wrap:balance}
+img{max-width:none;-webkit-user-drag:none}
+.ico{width:26px;height:26px;object-fit:contain;flex:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+
+/* ---------- scene ground ---------- */
+.scene{position:absolute;inset:0;overflow:hidden;background:#d9cdb8}
+.scene canvas,.scene>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scene .next{opacity:0;transition:opacity 1.4s ease}
+.scene .next.on{opacity:1}
+.kb{animation:kb 18s ease-in-out infinite alternate}
+@keyframes kb{to{transform:scale(1.06) translate(-1%,-1%)}}
+
+/* ---------- painted parts ---------- */
+.btn{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:62px;padding:6px 34px 12px;font-family:var(--cn-serif);font-weight:900;font-size:21px;letter-spacing:.04em;color:#fff;text-shadow:0 2px 0 rgba(10,70,40,.55);
+  border-style:solid;border-width:0 31px;border-image:url(ui/btn_green.png) 0 var(--capg,120) fill / 0 31px / 0 stretch;transition:transform .08s,filter .2s}
+.btn small{font-family:var(--body);font-weight:800;font-size:12px;letter-spacing:.02em;opacity:.92;margin-top:1px;text-shadow:none}
+.btn:active{transform:translateY(3px) scale(.985)}
+.btn.gold{border-image-source:url(ui/btn_gold.png);color:#5a3505;text-shadow:0 1px 0 rgba(255,240,200,.7)}
+.btn.cream{border-image-source:url(ui/btn_cream.png);color:var(--walnut);text-shadow:none;font-size:17px;min-height:52px}
+.btn.pulse{animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.035)}}
+.btn[disabled]{filter:grayscale(1) brightness(1.05);opacity:.55;pointer-events:none}
+.btn .bi{position:absolute;left:4px;top:50%;width:32px;height:32px;transform:translateY(-58%);object-fit:contain}
+.rb{position:relative;width:56px;height:58px;display:grid;place-items:center;background:url(ui/rb_ivory.png) center/contain no-repeat;flex:none;transition:transform .08s}
+.rb:active{transform:translateY(2px) scale(.96)}
+.rb.wood{background-image:url(ui/rb_walnut.png)}
+.rb img{width:32px;height:32px;object-fit:contain;margin-top:-4px}
+.rb .badge{position:absolute;top:-2px;right:-4px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--coral);color:#fff;font-weight:900;font-size:12px;display:grid;place-items:center;box-shadow:0 0 0 2px var(--paper)}
+.rb .lbl{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:12px;font-weight:800;color:var(--paper);text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.rb .dot{position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 2px var(--paper);animation:pulse 1.2s infinite}
+.pause-ico{width:16px;height:18px;margin-top:-4px;border-left:5px solid #fff3dc;border-right:5px solid #fff3dc}
+.cap-res{display:flex;align-items:center;gap:6px;height:36px;padding:0 14px 0 6px;min-width:84px;color:#fff;font-weight:900;font-size:16px;font-variant-numeric:tabular-nums;
+  border-style:solid;border-width:0 18px;border-image:url(ui/capsule.png) 0 var(--capc,60) fill / 0 18px / 0 stretch;padding:0 2px}
+.cap-res .ico{margin-left:-12px;width:30px;height:30px}
+.panel{position:relative;border-style:solid;border-width:var(--pw,30px);border-image:url(ui/panel.png) var(--ps,90) fill / var(--pw,30px) / 0 stretch}
+.ribbon{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;height:54px;color:#fff6e2;font-family:var(--cn-serif);font-weight:900;font-size:18px;text-shadow:0 2px 0 rgba(0,0,0,.25);
+  border-style:solid;border-width:0 44px;border-image:url(ui/ribbon.png) 0 var(--capr,150) fill / 0 44px / 0 stretch;padding-bottom:4px}
+.nametag{display:inline-flex;align-items:baseline;gap:8px;height:38px;padding:0 4px;color:#fff3dc;font-family:var(--cn-serif);font-weight:900;font-size:17px;line-height:38px;
+  border-style:solid;border-width:0 18px;border-image:url(ui/nametag.png) 0 var(--capn,60) fill / 0 18px / 0 stretch;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.nametag small{font-family:var(--body);font-size:11px;font-weight:800;opacity:.8;letter-spacing:.04em}
+.kicker{font-family:var(--body);font-size:12px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--brass-d)}
+
+/* ---------- title ---------- */
+#title .shade{position:absolute;inset:0;background:linear-gradient(0deg,rgba(24,16,10,.88) 0%,rgba(24,16,10,.55) 34%,rgba(24,16,10,0) 58%),linear-gradient(180deg,rgba(24,16,10,.35),rgba(24,16,10,0) 22%)}
+#title .over{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;text-align:center;padding-bottom:calc(28px + var(--sab));gap:14px}
+.logo{display:flex;flex-direction:column;align-items:center;gap:2px;color:#fff6e4}
+.logo .case{font-family:var(--body);font-weight:900;font-size:11px;letter-spacing:.32em;color:#f3d79b;padding:4px 12px;border:1px solid rgba(243,215,155,.5);border-radius:2px;margin-bottom:8px}
+.logo h1{font-family:var(--cn-serif);font-size:64px;line-height:1;letter-spacing:.16em;margin-right:-.16em;text-shadow:0 3px 18px rgba(0,0,0,.5);position:relative;overflow:hidden}
+.logo h1::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,240,200,.55) 50%,transparent 70%);transform:translateX(-120%);animation:shine 4.5s 1s infinite}
+@keyframes shine{30%,100%{transform:translateX(120%)}}
+.logo .en{font-family:var(--serif);font-style:italic;font-weight:500;font-size:22px;color:#f3d79b;letter-spacing:.06em}
+.logo .rule{display:flex;align-items:center;gap:10px;margin-top:10px;color:#f3d79b}
+.logo .rule i{width:42px;height:1px;background:currentColor;opacity:.6}
+.tagline{font-family:var(--cn-serif);font-weight:600;font-size:16px;line-height:1.7;color:#f6ead4;max-width:300px;margin:4px 0 6px}
+#title .btn{max-width:320px}
+.linkbtn{font-size:13px;font-weight:800;color:rgba(246,234,212,.75);padding:6px 12px}
+.load{width:220px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden}
+.load b{display:block;height:100%;width:0;background:#f3d79b;transition:width .2s}
+
+/* ---------- HUD ---------- */
+.hud{position:relative;z-index:3;display:flex;align-items:center;gap:8px;padding-top:calc(10px + var(--sat))}
+.spacer{flex:1}
+
+/* ---------- home ---------- */
+#home .scene::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(20,14,8,.35),rgba(20,14,8,0) 20%,rgba(20,14,8,0) 52%,rgba(20,14,8,.55) 80%,rgba(20,14,8,.75))}
+#home .over{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;min-height:0}
+.chrib{margin:10px auto 0;width:min(100%,360px);cursor:pointer}
+.chrib .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slots{display:flex;gap:2px;align-items:center}
+.slots img{width:24px;height:24px}
+.slots img.pop{animation:spop .5s cubic-bezier(.3,1.8,.5,1)}
+@keyframes spop{from{transform:scale(2.2)}}
+.chsub{text-align:center;margin-top:4px;font-size:12px;font-weight:800;color:#fff3dc;text-shadow:0 1px 3px rgba(0,0,0,.7);letter-spacing:.08em}
+.marker{position:absolute;z-index:1;width:56px;height:56px;margin:-28px 0 0 -28px;pointer-events:none}
+.marker::before{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(255,236,170,.95) 0 18%,rgba(255,210,110,.45) 34%,rgba(255,210,110,0) 68%);animation:breathe 1.8s ease-in-out infinite}
+.marker img{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);animation:bob 1.8s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.3);opacity:.7}}
+@keyframes bob{50%{transform:translate(-50%,-62%)}}
+.dock{margin-top:auto;display:flex;flex-direction:column;gap:12px;padding-bottom:calc(22px + var(--sab))}
+.lvcard{display:flex;gap:12px;align-items:center;--pw:22px;--ps:70}
+.lvcard .th{width:58px;height:78px;flex:none;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);background:center/cover;transform:rotate(-3deg)}
+.lvcard .th.story{background-color:#2b2420}
+.lvcard .kicker{display:flex;gap:8px;align-items:center}
+.lvcard h3{font-family:var(--cn-serif);font-size:20px;line-height:1.2;color:var(--ink);margin-top:2px}
+.lvcard p{margin:4px 0 0;font-family:var(--cn-serif);font-weight:600;font-size:14px;line-height:1.5;color:var(--ink2)}
+.hard{display:inline-block;font-family:var(--body);font-size:11px;font-weight:900;letter-spacing:.08em;color:#fff;background:linear-gradient(180deg,#e2553f,#b8361f);padding:2px 8px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(255,220,180,.5)}
+.dockrow{display:flex;align-items:center;gap:12px}
+.dockrow .btn{flex:1}
+
+/* ---------- play ---------- */
+#play .bg{position:absolute;inset:0;background:#6b4a33 center/cover no-repeat}
+#play .bg::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 48%,rgba(0,0,0,0) 45%,rgba(0,0,0,.35) 100%);transition:background .8s}
+#play.cine .bg::after{background:radial-gradient(ellipse at 50% 46%,rgba(8,10,16,.25) 0%,rgba(8,10,16,.9) 70%)}
+#play .top{position:relative;z-index:3;transition:opacity .4s}
+#play.cine .top,#play.cine .tools{opacity:0;pointer-events:none}
+.lvname{display:flex;flex-direction:column;min-width:0}
+.lvname small{font-size:11px;font-weight:900;letter-spacing:.12em;color:#f3d79b;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.lvname b{font-family:var(--cn-serif);font-size:19px;color:#fff6e4;text-shadow:0 2px 4px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timer{display:flex;align-items:center;gap:6px;height:40px;padding:0 6px;min-width:112px;color:#fff;font-weight:900;font-size:19px;font-variant-numeric:tabular-nums;border-style:solid;border-width:0 20px;border-image:url(ui/capsule.png) 0 var(--capc,60) fill / 0 20px / 0 stretch}
+.timer .ico{margin-left:-14px;width:30px;height:30px}
+.timer.low{color:#ffb4a6;animation:beat .6s ease-in-out infinite}
+.timer.low .ico{animation:tilt .6s infinite}
+@keyframes beat{50%{transform:scale(1.07)}}
+@keyframes tilt{50%{transform:rotate(14deg)}}
+.tbar{height:6px;border-radius:3px;background:rgba(0,0,0,.35);overflow:hidden;margin-top:10px;box-shadow:inset 0 1px 2px rgba(0,0,0,.4)}
+.tbar b{display:block;height:100%;width:100%;transform-origin:left;background:linear-gradient(180deg,#7fe0a8,#2fa56e);transition:background .4s}
+.tbar.mid b{background:linear-gradient(180deg,#ffd879,#e9a320)}
+.tbar.low b{background:linear-gradient(180deg,#ff9a85,#e2553f)}
+.tbar.off{visibility:hidden}
+.hookline{margin-top:10px;text-align:center;font-family:var(--cn-serif);font-weight:600;font-size:15px;line-height:1.5;color:#fff6e4;text-shadow:0 1px 4px rgba(0,0,0,.7);min-height:23px}
+.stage{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0;gap:14px}
+.frame{position:relative;background:#3a2c22;outline:10px solid #fbf6ec;box-shadow:0 0 0 11px rgba(154,114,50,.55),0 22px 40px rgba(0,0,0,.45);transition:transform .6s cubic-bezier(.5,0,.2,1),opacity .5s}
+.frame.story{outline-color:#fdfaf3;transform:rotate(-1.2deg);box-shadow:0 0 0 11px rgba(0,0,0,.08),0 26px 50px rgba(0,0,0,.6)}
+.frame.story::after{content:attr(data-label);position:absolute;left:0;right:0;bottom:-44px;height:34px;background:#fdfaf3;font-family:var(--hand);font-size:24px;color:#6b5a4a;text-align:center;line-height:30px}
+.frame.story{margin-bottom:34px}
+.frame.fly{transform:translate(42%,-62%) scale(.18) rotate(8deg);opacity:0}
+.tile{position:absolute;left:0;top:0;background-repeat:no-repeat;background-color:#4a3a2e;transition:translate .18s cubic-bezier(.22,1.3,.36,1),clip-path .18s;touch-action:none;cursor:grab}
+.tile.drag{transition:none;z-index:5;filter:brightness(1.08) drop-shadow(0 12px 14px rgba(0,0,0,.55))}
+.tile.snap{animation:snap .45s}
+.tile.hinted{animation:hinted .9s 2}
+@keyframes snap{35%{filter:brightness(1.45) saturate(1.1)}}
+@keyframes hinted{50%{filter:brightness(1.5) drop-shadow(0 0 8px #ffd879)}}
+.tile.dark{cursor:not-allowed}
+.tile .back{position:absolute;inset:0;background:url(ui/photo_back.webp) center/cover;box-shadow:inset 0 0 0 1px rgba(120,90,50,.35);backface-visibility:hidden}
+.tile.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.tile.flip3d{animation:flip3d .8s cubic-bezier(.3,0,.2,1)}
+@keyframes flip3d{0%{transform:perspective(700px) rotateY(0)}50%{transform:perspective(700px) rotateY(90deg) scale(1.08)}100%{transform:perspective(700px) rotateY(0)}}
+.whole{position:absolute;inset:0;background-repeat:no-repeat;opacity:0;transition:opacity .35s;pointer-events:none;z-index:6}
+.whole.on{opacity:1}
+.sweep{position:absolute;inset:0;z-index:7;pointer-events:none;overflow:hidden}
+.sweep::after{content:"";position:absolute;top:-20%;bottom:-20%;width:45%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,250,230,.75),transparent);transform:skewX(-18deg);animation:sweep .9s ease-out forwards}
+@keyframes sweep{to{left:120%}}
+.zoom{position:absolute;inset:0;overflow:hidden;z-index:8}
+.zoom img{position:absolute;left:0;top:0;width:100%;height:100%;transform-origin:0 0;transition:transform 2.8s cubic-bezier(.55,0,.15,1)}
+.ring{position:absolute;z-index:9;pointer-events:none;overflow:visible}
+.ring ellipse{fill:none;stroke:#e2402a;stroke-width:4;stroke-linecap:round;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4));animation:draw .6s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.cap{min-height:64px;width:100%;display:grid;place-items:center;text-align:center}
+.cap span{font-family:var(--cn-serif);font-weight:900;font-size:21px;line-height:1.45;color:#fff6e4;padding:10px 18px;background:linear-gradient(90deg,rgba(10,10,14,0),rgba(10,10,14,.78) 18%,rgba(10,10,14,.78) 82%,rgba(10,10,14,0));animation:rise .7s both;text-wrap:balance;max-width:100%}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+.tools{position:relative;z-index:3;display:flex;gap:36px;align-items:flex-start;justify-content:center;padding-bottom:calc(36px + var(--sab));min-height:104px;transition:opacity .4s}
+.peek{position:absolute;inset:0;background-repeat:no-repeat;z-index:8;pointer-events:none;animation:fade .2s both}
+.hand{position:absolute;z-index:12;width:54px;height:54px;pointer-events:none;margin:-8px 0 0 -14px}
+.hand svg{width:100%;height:100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}
+.tip{position:absolute;z-index:12;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:var(--cn-serif);font-weight:900;font-size:15px;color:var(--ink);background:var(--paper);padding:8px 14px;border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.35);animation:rise .4s both}
+.tip::after{content:"";position:absolute;left:50%;bottom:-6px;width:12px;height:12px;margin-left:-6px;background:var(--paper);transform:rotate(45deg)}
+.praise{position:absolute;z-index:11;font-family:var(--serif);font-style:italic;font-weight:800;font-size:30px;color:#ffe08a;-webkit-text-stroke:1px #8a5a12;text-shadow:0 3px 0 #8a5a12,0 6px 12px rgba(0,0,0,.4);pointer-events:none;animation:praise 1s ease-out forwards;white-space:nowrap}
+@keyframes praise{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15);opacity:1}100%{transform:translate(-50%,-120%) scale(1);opacity:0}}
+
+/* ---------- modal ---------- */
+.veil{position:absolute;inset:0;z-index:40;background:rgba(10,8,6,.6);display:flex;align-items:center;justify-content:center;animation:fade .2s both}
+@keyframes fade{from{opacity:0}}
+.modal{width:min(100% - 32px,340px);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;--pw:30px;--ps:90;animation:pop .35s cubic-bezier(.3,1.5,.5,1) both;margin-top:30px}
+@keyframes pop{from{transform:scale(.8);opacity:0}}
+.modal .medal{width:84px;height:84px;margin:-74px 0 -6px;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fffaf0,#f1e2c4);box-shadow:0 0 0 4px var(--brass),0 8px 18px rgba(0,0,0,.35)}
+.modal .medal img{width:56px;height:56px;object-fit:contain}
+.modal h3{font-family:var(--cn-serif);font-size:26px;color:var(--ink)}
+.modal p{margin:0;color:var(--ink2);font-weight:700;font-size:14px}
+.modal .x{position:absolute;top:-16px;right:-16px;width:36px;height:36px;border-radius:50%;background:#fffaf0;box-shadow:0 0 0 2px var(--brass),0 3px 8px rgba(0,0,0,.3);display:grid;place-items:center;font-size:20px;font-weight:900;color:var(--ink2)}
+.prog{width:100%;height:14px;border-radius:7px;background:#e6d6b8;box-shadow:inset 0 1px 3px rgba(0,0,0,.25);overflow:hidden;position:relative}
+.prog b{display:block;height:100%;background:linear-gradient(180deg,#7fe0a8,#2fa56e);border-radius:7px}
+.prog span{position:absolute;inset:0;font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.5);line-height:14px}
+.modal .btn{margin-top:2px;font-size:18px;white-space:nowrap}
+.gains{display:flex;gap:18px;justify-content:center;align-items:center;font-weight:900;font-size:20px;color:var(--ink);font-variant-numeric:tabular-nums}
+.gains span{display:flex;align-items:center;gap:6px}
+.gains .ico{width:34px;height:34px}
+.bigstar{width:96px;height:96px;margin:-82px 0 -8px;animation:starin .7s cubic-bezier(.3,1.6,.5,1) both;filter:drop-shadow(0 6px 10px rgba(120,70,0,.45))}
+@keyframes starin{from{transform:scale(0) rotate(-180deg)}}
+
+/* ---------- dialogue ---------- */
+#dlg .scene canvas{filter:blur(3px) saturate(.95);transform:scale(1.05)}
+#dlg .scene::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,12,6,.25),rgba(18,12,6,.05) 30%,rgba(18,12,6,.55) 75%,rgba(18,12,6,.85))}
+#dlg .busts{position:absolute;inset:0;z-index:1;pointer-events:none}
+#dlg .busts img{position:absolute;bottom:calc(150px + var(--sab));height:56%;opacity:0;transition:transform .35s cubic-bezier(.3,1.3,.5,1),opacity .3s,filter .3s;filter:drop-shadow(0 12px 24px rgba(0,0,0,.35))}
+#dlg .busts .l{left:-22%;transform:translateX(-30px)} #dlg .busts .r{right:-18%;transform:translateX(30px)}
+#dlg .busts img.in{opacity:1;transform:scale(.94);filter:brightness(.55) saturate(.7) drop-shadow(0 12px 24px rgba(0,0,0,.35))}
+#dlg .busts img.on{opacity:1;transform:none;filter:drop-shadow(0 12px 24px rgba(0,0,0,.35));z-index:2}
+#dlg .box{position:absolute;left:0;right:0;bottom:0;z-index:3;padding-bottom:calc(16px + var(--sab))}
+#dlg .bubble{--pw:24px;--ps:72;height:150px}
+#dlg .bubble .nametag{position:absolute;top:-40px;left:-6px}
+#dlg .bubble .nametag.r{left:auto;right:-6px}
+#dlg .line{font-family:var(--cn-serif);font-weight:600;font-size:18px;line-height:1.65;color:var(--ink);padding-top:6px}
+#dlg .line em{font-style:normal;color:#b5381f;font-weight:900}
+#dlg .bubble.nar .line{text-align:center;font-style:italic;color:var(--ink2);padding-top:16px}
+#dlg .more{position:absolute;right:2px;bottom:-4px;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:12px solid var(--brass-d);animation:bob2 .8s ease-in-out infinite;opacity:0}
+#dlg .more.on{opacity:1}
+@keyframes bob2{50%{transform:translateY(4px)}}
+#dlg .skip{position:absolute;top:calc(14px + var(--sat));right:16px;z-index:4;font-size:13px;font-weight:800;color:rgba(255,246,228,.7);padding:6px 10px}
+
+/* ---------- chapter card ---------- */
+#chap .scene canvas{filter:blur(6px) brightness(.55)}
+#chap .over{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;padding-bottom:var(--sab)}
+.postcard{width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;--pw:30px;--ps:90;animation:pop .5s cubic-bezier(.3,1.4,.5,1) both}
+.postcard h2{font-family:var(--cn-serif);font-size:30px;color:var(--ink)}
+.postcard .hook{font-family:var(--cn-serif);font-weight:600;font-size:16px;line-height:1.6;color:#9b3a24}
+.pol{background:#fffdf7;padding:7px 7px 30px;box-shadow:0 6px 14px rgba(0,0,0,.25);position:relative;min-width:0}
+.pol .ph{aspect-ratio:2/3;background:#ddd center/cover}
+.pol .lb{position:absolute;left:0;right:0;bottom:2px;text-align:center;font-family:var(--hand);font-size:20px;color:#5b4a3c;line-height:28px}
+.pol .tape{position:absolute;top:-12px;left:50%;width:70px;height:24px;margin-left:-35px;background:url(ui/tape.png) center/100% 100% no-repeat;transform:rotate(-4deg)}
+.postcard .pol{width:132px;transform:rotate(-3deg);margin:6px 0 4px}
+.chdots{display:flex;gap:6px;justify-content:center}
+.chdots i{width:10px;height:10px;border-radius:50%;background:#e2d2b2;box-shadow:inset 0 1px 2px rgba(0,0,0,.2)}
+.chdots i.done{background:var(--green)}
+.reward{display:flex;align-items:center;gap:14px;justify-content:center;padding:8px 14px;border-radius:12px;background:rgba(201,154,78,.14);font-weight:900;color:var(--ink)}
+.reward .gift{width:40px;height:40px;animation:wob 1.2s ease-in-out 3}
+@keyframes wob{25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}
+#chap .btnwrap{width:100%;max-width:340px;display:flex;flex-direction:column;gap:8px}
+
+/* ---------- board ---------- */
+#board .bgc{position:absolute;inset:0;background:#b98a57 url(ui/bg_cork.webp) center/cover}
+#board .over{position:relative;z-index:1;flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(30px + var(--sab));-webkit-overflow-scrolling:touch}
+.bhead{display:flex;align-items:center;gap:10px;padding-top:calc(10px + var(--sat));padding-bottom:6px}
+.bhead .ribbon{flex:1;max-width:240px;margin:0 auto 0 0}
+.sech{margin:18px 0 10px;display:flex;align-items:center;gap:8px;font-family:var(--cn-serif);font-weight:900;font-size:15px;color:#fff6e4;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.sech::after{content:"";flex:1;height:1px;background:rgba(255,246,228,.35)}
+.notes{display:flex;flex-direction:column;gap:14px}
+.note{position:relative;background:linear-gradient(180deg,#fffbe9,#fdf3cf);padding:16px 14px 12px;box-shadow:0 4px 10px rgba(60,30,10,.3);display:flex;flex-direction:column;gap:5px;background-image:repeating-linear-gradient(180deg,transparent 0 23px,rgba(120,150,190,.18) 23px 24px),linear-gradient(180deg,#fffbe9,#fdf3cf)}
+.note:nth-child(odd){transform:rotate(-.8deg)} .note:nth-child(even){transform:rotate(.7deg)}
+.note .pin{position:absolute;top:-10px;left:50%;width:26px;height:26px;margin-left:-13px}
+.note b{font-family:var(--cn-serif);font-size:16px;color:var(--ink);display:flex;gap:6px;align-items:center}
+.note b i{font-style:normal;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;color:#fff;background:#c98a2e;flex:none}
+.note.solved b i{background:var(--green)}
+.note span{font-family:var(--cn-serif);font-weight:600;font-size:13.5px;line-height:1.6;color:var(--ink2)}
+.note span.a{color:var(--ink);font-weight:900;background:linear-gradient(180deg,transparent 55%,rgba(255,214,90,.6) 55%)}
+.note.new{animation:stick .5s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes stick{from{transform:scale(1.15) rotate(3deg);opacity:0}}
+.people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px}
+.pp{position:relative;background:#fffdf7;padding:7px 7px 8px;box-shadow:0 5px 12px rgba(40,20,5,.35);display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;min-width:0}
+.pp:nth-child(4n+1){transform:rotate(-1.5deg)} .pp:nth-child(4n+2){transform:rotate(1.2deg)} .pp:nth-child(4n+3){transform:rotate(.8deg)} .pp:nth-child(4n){transform:rotate(-1deg)}
+.pp .pin{position:absolute;top:-9px;left:50%;width:22px;height:22px;margin-left:-11px;z-index:2}
+.pp .face{width:100%;aspect-ratio:1;background:#e8dcc6 center/cover no-repeat}
+.pp b{font-family:var(--hand);font-size:22px;line-height:1.1;color:var(--ink);margin-top:2px}
+.pp span{font-family:var(--cn-serif);font-weight:600;font-size:12px;line-height:1.45;color:var(--ink2);min-height:35px}
+.stamp{position:absolute;bottom:66px;right:-12px;width:96px;height:32px;z-index:3;display:grid;place-items:center;font-family:var(--cn-serif);font-weight:900;font-size:16px;letter-spacing:.12em;transform:rotate(-14deg);background:center/100% 100% no-repeat;opacity:.92;mix-blend-mode:multiply}
+.stamp.sus{background-image:url(ui/stamp_red.png);color:#b3261a}
+.stamp.hide{background-image:url(ui/stamp_amber.png);color:#c06a10}
+.stamp.out{background-image:url(ui/stamp_slate.png);color:#4d5f74}
+.stamp.true{background-image:url(ui/stamp_red.png);color:#1f7a4f;filter:hue-rotate(140deg) saturate(.9)}
+.stamp.slam{animation:slam .45s cubic-bezier(.5,0,.6,1.4) both}
+@keyframes slam{from{transform:rotate(-14deg) scale(2.6);opacity:0}}
+.pols{display:flex;gap:14px;overflow-x:auto;padding:16px 4px 10px;margin:0 -4px;scroll-snap-type:x mandatory}
+.pols .pol{flex:0 0 108px;scroll-snap-align:start}
+.pols .pol:nth-child(odd){transform:rotate(-2deg)} .pols .pol:nth-child(even){transform:rotate(2.2deg)}
+.pols .pol.empty .ph{background:#cfc2a8 url(ui/photo_back.webp) center/cover;opacity:.75}
+.viewer{position:absolute;inset:0;z-index:50;background:rgba(10,8,6,.9);display:grid;place-items:center;padding:24px;animation:fade .2s both}
+.viewer img{max-width:100%;max-height:80%;border:8px solid #fffdf7;border-bottom-width:40px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+
+/* ---------- renovation ---------- */
+#reno .over{position:relative;z-index:2;flex:1;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding-bottom:calc(20px + var(--sab));transition:opacity .4s}
+#reno.done .over{opacity:0;pointer-events:none}
+#reno .ribbon{margin:calc(12px + var(--sat)) auto 0;width:min(100%,340px)}
+.tray{--pw:24px;--ps:72;display:flex;flex-direction:column;gap:12px}
+.choices{display:flex;gap:10px;justify-content:center}
+.ch{flex:1;max-width:100px;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--cn-serif);font-weight:900;font-size:13px;color:var(--ink2)}
+.ch .sw{width:100%;aspect-ratio:1;border-radius:12px;background:center/cover;box-shadow:0 0 0 3px #fff,0 0 0 4px rgba(154,114,50,.5),0 4px 10px rgba(0,0,0,.2);position:relative;transition:transform .2s}
+.ch.on .sw{transform:scale(1.08);box-shadow:0 0 0 3px #fff,0 0 0 6px var(--gold),0 6px 14px rgba(0,0,0,.25)}
+.ch.on .sw::after{content:"✓";position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;font-size:14px;display:grid;place-items:center;box-shadow:0 0 0 2px #fff}
+.ch.on{color:var(--ink)}
+.one{display:flex;align-items:center;gap:14px}
+.one .sw{width:84px;height:84px;flex:none;border-radius:12px;background:center/cover;box-shadow:0 0 0 3px #fff,0 0 0 4px rgba(154,114,50,.5)}
+.one p{margin:0;font-family:var(--cn-serif);font-weight:600;font-size:15px;line-height:1.6;color:var(--ink2)}
+
+/* ---------- end ---------- */
+#end .scene::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,10,6,0) 30%,rgba(14,10,6,.85) 62%,rgba(14,10,6,.95))}
+#end .over{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;text-align:center;gap:12px;padding-bottom:calc(26px + var(--sab))}
+.halves{position:relative;width:300px;height:170px}
+.halves img{position:absolute;top:0;height:100%;width:auto;transition:transform 1.6s cubic-bezier(.6,0,.2,1)}
+.halves .l{right:50%;transform:translateX(-46px) rotate(-6deg)}
+.halves .r{left:50%;transform:translateX(46px) rotate(5deg)}
+.halves.join .l{transform:translateX(17px) rotate(-1deg)} .halves.join .r{transform:translateX(-17px) rotate(-1deg)}
+#end h2{font-family:var(--cn-serif);font-size:30px;color:#fff6e4;letter-spacing:.08em}
+#end p{margin:0;font-family:var(--cn-serif);font-weight:600;color:#f3d79b;font-size:16px;line-height:1.6}
+#end .btn{max-width:300px}
+
+.toast{position:absolute;left:50%;top:calc(76px + var(--sat));transform:translateX(-50%);z-index:70;background:rgba(30,22,14,.92);color:#fff6e4;font-weight:800;font-size:14px;padding:9px 16px;border-radius:99px;box-shadow:0 8px 20px rgba(0,0,0,.3);animation:rise .3s both;white-space:nowrap}
+.ad{position:absolute;inset:0;z-index:60;background:#000;display:grid;place-items:center;text-align:center;color:#bbb;font-size:13px}
+.ad b{display:block;font-size:64px;color:#fff;font-family:var(--serif)}
+#fx{position:absolute;inset:0;z-index:80;pointer-events:none;width:100%;height:100%}
+.flystar{position:absolute;z-index:81;width:64px;height:64px;margin:-32px 0 0 -32px;pointer-events:none}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;transition-duration:.01s!important}}
+</style>
+
+<div id="app">
+  <section class="screen" id="title">
+    <div class="scene"><img class="kb" id="titleImg" alt=""></div>
+    <div class="shade"></div>
+    <div class="over pad">
+      <div class="logo">
+        <div class="case">CASE 01 · 海边别墅</div>
+        <h1>碎影</h1>
+        <div class="en">Torn Portraits</div>
+        <div class="rule"><i></i>✦<i></i></div>
+      </div>
+      <p class="tagline">亡夫锁上的抽屉里，<br>躺着一张撕碎的照片。</p>
+      <div class="load" id="loadbar"><b></b></div>
+      <button class="btn" id="startBtn" hidden>开始调查</button>
+      <button class="linkbtn" id="resetBtn" hidden>从头开始</button>
+    </div>
+  </section>
+
+  <section class="screen" id="home" hidden>
+    <div class="scene" id="homeScene"></div>
+    <div class="over pad">
+      <div class="hud" id="homeHud"></div>
+      <div class="ribbon chrib" id="chRib"></div>
+      <div class="chsub" id="chSub"></div>
+      <div class="dock">
+        <div class="panel lvcard" id="lvCard"></div>
+        <div class="dockrow"><button class="btn" id="goBtn"></button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="play" hidden>
+    <div class="bg" id="playBg"></div>
+    <div class="top pad">
+      <div class="hud"><button class="rb wood" id="pauseBtn" aria-label="暂停"><i class="pause-ico"></i></button><div class="lvname" id="lvLabel"></div><div class="spacer"></div><div id="timerBox"></div></div>
+      <div class="tbar" id="tbar"><b></b></div>
+      <div class="hookline" id="hookline"></div>
+    </div>
+    <div class="stage"><div class="frame" id="frame"></div><div class="cap" id="cap"></div></div>
+    <div class="tools pad" id="tools">
+      <button class="rb" id="hintBtn" aria-label="提示"><img src="ui/ic_loupe.png" alt=""><span class="badge" id="hintN"></span><span class="lbl">提示</span></button>
+      <button class="rb" id="peekBtn" aria-label="看原图"><img src="ui/ic_photo.png" alt=""><span class="lbl">看原图</span></button>
+    </div>
+  </section>
+
+  <section class="screen" id="dlg" hidden>
+    <div class="scene" id="dlgScene"></div>
+    <div class="busts" id="busts"></div>
+    <button class="skip" id="skipBtn">跳过 ›</button>
+    <div class="box pad"><div class="panel bubble" id="bubble"><div class="nametag" id="dName"></div><div class="line" id="dLine"></div><i class="more" id="more"></i></div></div>
+  </section>
+
+  <section class="screen" id="chap" hidden>
+    <div class="scene" id="chapScene"></div>
+    <div class="over pad" id="chapOver"></div>
+  </section>
+
+  <section class="screen" id="board" hidden>
+    <div class="bgc"></div>
+    <div class="over pad" id="boardOver"></div>
+  </section>
+
+  <section class="screen" id="reno" hidden>
+    <div class="scene" id="renoScene"></div>
+    <div class="over pad">
+      <div class="ribbon" id="renoTitle"></div>
+      <div class="panel tray" id="tray"></div>
+    </div>
+  </section>
+
+  <section class="screen" id="end" hidden>
+    <div class="scene" id="endScene"></div>
+    <div class="over pad">
+      <div class="halves" id="halves"><img class="l" src="ui/torn_l.png" alt=""><img class="r" src="ui/torn_r.png" alt=""></div>
+      <div class="kicker" style="color:#f3d79b">Case 01 · 结案</div>
+      <h2>真相，才刚刚开始</h2>
+      <p>下一案：另一半照片</p>
+      <button class="btn" id="againBtn">重温本案</button>
+    </div>
+  </section>
+  <canvas id="fx"></canvas>
+</div>
+
+<script>
+/* ================= content ================= */
+const IMG = 'img2/', UI = 'ui/';
+const PIC = {
+  title:'title.webp', roomBefore:'room_before.webp', roomClean:'room_clean.webp',
+  desk:'lv_desk.webp', tea:'lv_tea.webp', hall:'lv_hall.webp', attic:'lv_attic.webp', gardenNight:'lv_garden_night.webp',
+  kitchen:'lv_kitchen.webp', vanity:'lv_vanity.webp', portraits:'lv_portraits.webp',
+  cottageOut:'lv_cottage_out.webp', cottageIn:'lv_cottage_in.webp',
+  stParty:'st_party.webp', stOffice:'st_office.webp', stPolaroid:'st_polaroid.webp', st1989:'st_1989.webp', stWide:'st_wide.webp',
+  iris:'bust_iris.webp', margaret:'bust_margaret.webp', hilda:'bust_hilda.webp', claire:'bust_claire.webp',
+};
+const UIFILES = ['btn_green.png','btn_gold.png','btn_cream.png','rb_ivory.png','rb_walnut.png','capsule.png','panel.png','ribbon.png','nametag.png',
+  'ic_heart.png','ic_coin.png','ic_star.png','ic_star_empty.png','ic_loupe.png','ic_photo.png','ic_board.png','ic_hourglass.png','ic_lock.png','ic_gift.png','ic_key.png','ic_letter.png',
+  'stamp_red.png','stamp_amber.png','stamp_slate.png','pin_red.png','pin_brass.png','tape.png','bg_desk.webp','bg_velvet.webp','bg_cork.webp','photo_back.webp','torn_l.png','torn_r.png'];
+const ic = n => UI + 'ic_' + n + '.png';
+const WHO = {
+  iris:{n:'Iris', role:'遗物修复师', side:'l'},
+  margaret:{n:'Margaret', role:'委托人', side:'r'},
+  hilda:{n:'Hilda', role:'管家', side:'r'},
+  claire:{n:'红发女人', role:'', side:'r'},
+};
+const KEYWORDS = ['祖母绿','绿戒指','戒指','红发','胸针','钥匙','撬痕','寻亲档案所','寻亲','拍立得','小屋','C.','1989'];
+
+// level config (art side). title/hook/post come from SCRIPT.
+const LV = {
+  L1:{pic:'desk', n:3, time:0, tut:true},
+  L2:{pic:'tea', n:4, time:80},
+  L3:{pic:'hall', n:5, time:110, hard:true},
+  L4:{pic:'attic', n:4, time:80},
+  L5:{pic:'desk', n:4, time:80, f:.6, cx:.2, cy:.35},
+  L6:{pic:'gardenNight', n:5, time:110, hard:true},
+  L7:{pic:'kitchen', n:4, time:80},
+  L8:{pic:'gardenNight', n:4, time:85, f:.55, cx:.16, cy:.2},
+  L9:{pic:'tea', n:5, time:110, hard:true, f:.65, cx:.1, cy:.3},
+  L10:{pic:'vanity', n:4, time:85},
+  L11:{pic:'hall', n:4, time:85, f:.6, cx:.3, cy:.25},
+  L12:{pic:'portraits', n:5, time:115, hard:true},
+  L13:{pic:'cottageOut', n:4, time:85},
+  L14:{pic:'cottageIn', n:5, time:110},
+  L15:{pic:'cottageIn', n:5, time:115, hard:true, f:.6, cx:.4, cy:.2},
+};
+// story puzzles: crop f at (cx,cy), dark = key tiles. name = before solving, label = after solving (polaroid caption)
+const ST = {
+  S1:{pic:'stParty', n:4, f:.6, cx:.4, cy:.15, dark:[4,8], name:'撕碎的派对照', label:'派对'},
+  S2:{pic:'stOffice', n:4, f:.37, cx:.015, cy:.27, dark:[5,6], name:'折皱的聚会照', label:'欢送会'},
+  S3:{pic:'stPolaroid', n:4, f:.5, cx:.28, cy:.3, dark:[1,6], name:'烧焦的拍立得', label:'烧焦的'},
+  S4:{pic:'st1989', n:4, f:.5, cx:.52, cy:.42, dark:[5], name:'画框后的旧照', label:'1989'},
+  S5:{pic:'stWide', n:4, f:.55, cx:.3725, cy:.3725, dark:[5,6], name:'壁炉上的原片', label:'订婚宴'},
+};
+// tidying the study (Iris's actual job: clear and clean the estate before the agent comes). One area per chapter,
+// revealed from room_before to room_clean (pixel-aligned edit). rects = area that turns clean, rub = where the finger works.
+const RENO = [
+  {title:'擦净书桌', rects:[[.2,.38,.5,.28]], rub:[.22,.42,.46,.22]},
+  {title:'掀开防尘布', rects:[[.6,.46,.4,.36]], rub:[.62,.5,.34,.28]},
+  {title:'擦亮窗户', rects:[[.22,0,.74,.5]], rub:[.32,.12,.5,.3]},
+  {title:'收走纸箱，整理书架', rects:[[0,.03,.3,.71],[.86,.03,.14,.5]], rub:[0,.12,.28,.58]},
+  {title:'铺开地毯', rects:[[0,0,1,1]], rub:[.05,.62,.9,.3]},
+];
+const CH_REWARD = {coins:50, hints:1};
+
+let SCRIPT = null;
+const SCRIPT_JSON = `{"case_title": "上锁的抽屉", "chapters": [{"no": 1, "title": "上锁的抽屉", "intro": [["nar", "海风吹进书房，空书架上落着薄灰。"], ["margaret", "Edward 走了三周，后天中介就来收房。"], ["iris", "我是来整理遗物的，您想先清哪儿？"], ["margaret", "先清书房吧。书桌抽屉我锁死了。"], ["margaret", "里面的东西别给我看，直接处理掉。"], ["iris", "您真的不看一眼？万一有重要物件呢。"], ["margaret", "我想知道的事，已经够多了。"]], "levels": [{"id": "L1", "title": "桌面之下", "hook": "后天就收房，抽屉为何还锁着？", "post": [["iris", "锁眼有新鲜撬痕，昨夜有人想硬撬这抽屉。"], ["iris", "露台好像刚泡了茶，去问问 Margaret 吧。"]]}, {"id": "L2", "title": "冷掉的茶", "hook": "两杯下午茶，为何一杯没动过？", "post": [["margaret", "习惯摆两杯了，只是少了个喝茶的人。"], ["hilda", "门厅的搬家纸箱刚码好，Iris 小姐千万别乱翻。"]]}, {"id": "L3", "title": "急着打包", "hook": "她护着门厅纸箱，里面藏了什么？", "post": [["iris", "纸箱底层掉出一把小铜钥匙，还有枚旧公司徽章。"], ["iris", "这钥匙尺寸刚好……是书桌抽屉的。"], ["iris", "Hilda 这么紧张纸箱，是在防我找到钥匙？"]]}], "story_pre": [["nar", "钥匙一转，抽屉里躺着一叠撕碎的照片。"], ["iris", "碎成这样还锁着，总得拼出来看看。"]], "cap_dark": "肩上的手，戴着祖母绿戒指。", "cap_zoom": "红发女人，正靠在他怀里。", "story_post": [["nar", "Margaret 走进书房，脸色骤变，盯着那枚戒指。"], ["margaret", "收起来，别让 Hilda 看见。"], ["margaret", "那晚太暗，我竟没看清这戒指……查出她是谁。"], ["iris", "您认识这枚戒指？"], ["margaret", "别多问，加钱，两天内帮我查清她是谁。"], ["iris", "还有件事，抽屉底压着海边小屋的遗嘱。"], ["iris", "受益人没写全名，只留了一个字母 C。"]], "chapter_hook": "小屋留给神秘的 C，她就是红发女人吗？"}, {"no": 2, "title": "C.", "intro": [["hilda", "太太让我配合您，我就直说了。"], ["hilda", "老爷以前有个红发秘书，叫 Cecily Vance。"], ["hilda", "那几年她总往家里打电话，太太最烦她。"], ["iris", "公司旧档还在阁楼吧？正好和纸箱里的徽章对一对。"]], "levels": [{"id": "L4", "title": "尘封旧档", "hook": "满屋旧档案箱，哪箱藏着红发身影？", "post": [["iris", "旧相册少了一页，箱底还夹着寻亲档案所的收据。"], ["iris", "寻亲机构不像公司业务，先记下来。"], ["iris", "书房书桌角落，刚才好像露着半角旧相纸。"]]}, {"id": "L5", "title": "漏网旧照", "hook": "书桌角落底下，压着哪张公司旧照？", "post": [["iris", "压在书桌角落的，是张折皱的公司聚会照。"], ["hilda", "天黑了，Iris 小姐早点回房休息，别乱走动。"]]}, {"id": "L6", "title": "暗夜微烟", "hook": "半夜花园角落，铁桶为何冒起轻烟？", "post": [["iris", "铁桶冒着一缕烟，四周却空无一人。"], ["iris", "先回屋拼完那张聚会照，核实一下 Hilda 的话。"]]}], "story_pre": [["nar", "台灯下，Iris 铺开那张折皱的公司聚会照。"], ["iris", "照片上要真是 Cecily，正好核对一下。"]], "cap_dark": "红发秘书，果然一模一样。", "cap_zoom": "可展板旁，她早已白发苍苍。", "story_post": [["iris", "年轻那张只是退休展板，旁边的 Cecily 早白发了。"], ["margaret", "派对上那女人顶多三十出头，绝不是她。"], ["iris", "Hilda 伺候了您几十年，不可能不知道她老了。"], ["margaret", "那她为什么故意把我们往 Cecily 身上引？"], ["nar", "话音刚落，窗外花园骤然窜起火光。"], ["iris", "铁桶烧起来了，Hilda 正往里扔东西！"]], "chapter_hook": "前秘书早已白发，花园却突然烧了起来。"}, {"no": 3, "title": "烧掉的东西", "intro": [["nar", "Hilda 刚进厨房洗手，外头夜色还浓。"], ["iris", "这么晚了，您在花园铁桶里烧什么？"], ["hilda", "清理些搬家废单据，省得后天中介来乱。"], ["iris", "是吗？可您眼神怎么一直往门外飘。"]], "levels": [{"id": "L7", "title": "火候未灭", "hook": "厨房干干净净，围裙怎沾了黑灰？", "post": [["iris", "水池边藏着发烫的火钳，她刚从火桶回来。"], ["iris", "她领口别着枚银燕子胸针，刚才慌得歪了。"], ["iris", "趁火还没彻底烧透，我得赶紧回铁桶边看看。"]]}, {"id": "L8", "title": "余烬之下", "hook": "铁桶还在冒烟，有什么没烧干净？", "post": [["nar", "Iris 从余烬里抢出半张焦黑的拍立得。"], ["iris", "天刚擦亮，她躲去露台了，拿这东西去问她。"]]}, {"id": "L9", "title": "失手的茶", "hook": "破晓露台端茶手抖，她在怕什么？", "post": [["hilda", "我真只是烧过期旧单据，小姐别多心。"], ["iris", "单据可不用拍立得相纸，我这就拼开看。"]]}], "story_pre": [["nar", "焦黑的拍立得裂成几块，边缘还在掉灰。"], ["hilda", "求您别拼了，那东西早该化作灰的。"]], "cap_dark": "婴儿小手，攥着那枚绿戒指。", "cap_zoom": "脸被烧穿，领口却是她的胸针。", "story_post": [["iris", "这不是单据，抱孩子的人别着您的银燕子胸针。"], ["hilda", "三十七年前我答应过一个人，全烧干净。"], ["hilda", "那年冬天的东西，一件都不能留。"], ["iris", "绿戒指，燕子胸针……这孩子是您的吗？"], ["iris", "昨夜撬书桌抽屉的人，也是您吧。"], ["hilda", "我什么都不会说。老爷自己还留了一张……"], ["nar", "Hilda 猛地捂住嘴，转身快步离开。"]], "chapter_hook": "胸针指向管家，老爷偷留的照藏在哪？"}, {"no": 4, "title": "歪掉的油画", "intro": [["nar", "清早门铃响了，房产中介提前上门看房。"], ["margaret", "中介来得太急，我先下楼应付。"], ["margaret", "Iris，帮我去主卧梳妆台取下那本旧相册。"], ["nar", "主卧阳光正好，梳妆台的首饰盒微微敞着。"], ["iris", "那枚祖母绿成色太好，怎么看都不像管家的。"]], "levels": [{"id": "L10", "title": "空着的戒托", "hook": "满盒首饰里，哪格空了三十多年？", "post": [["iris", "空戒托压痕和绿戒指一样，原主是 Margaret。"], ["iris", "下楼交相册时，楼梯墙根好像落了层怪灰。"]]}, {"id": "L11", "title": "高处暗痕", "hook": "楼梯油画底下，怎落了一层墙灰？", "post": [["iris", "扶手上有踩过的鞋印，有人踮脚够过上面的画。"], ["iris", "那排风景油画里，有一幅明显挂歪了。"]]}, {"id": "L12", "title": "歪掉的风景", "hook": "整墙油画笔直，偏偏这幅挂歪了？", "post": [["nar", "Iris 扶正风景画，背面滑出一个牛皮纸袋。"], ["iris", "里面也是碎照片……这就是 Edward 留的那张。"]]}], "story_pre": [["nar", "Margaret 送走中介上楼，见纸袋僵住。"], ["iris", "照片撕得很细，但人像还在，我来拼好。"]], "cap_dark": "托着婴儿的手，戴着绿戒指。", "cap_zoom": "红发少女是她，管家在旁守护。", "story_post": [["margaret", "那年我十九岁，还没把红发染成现在这样。"], ["margaret", "家里逼我送走女儿，我把祖母戒指塞进了襁褓。"], ["margaret", "那枚燕子胸针是 Hilda 借我壮胆的，后来还了她。"], ["iris", "所以她撬抽屉、烧照片，全是替您守三十七年的秘密。"], ["margaret", "可我连 Edward 都没提过，他怎么会有这张照？"], ["nar", "Hilda 站在楼梯口，红着眼低声开口。"], ["hilda", "五年前他整理老夫人遗物翻出它，逼问我才说了。"], ["hilda", "他不让我告诉您，说等找到人再给您惊喜。"], ["iris", "阁楼有张寻亲档案所的收据，他靠那个找到她了。"], ["margaret", "你是说……派对上戴着绿戒指的红发女人……"], ["iris", "三十多岁，红头发，戴着您留给女儿的戒指。"], ["iris", "她就是您女儿。海边小屋，是留给她的。"], ["margaret", "我们现在就去……等等，小屋钥匙还挂在玄关。"], ["iris", "您看窗外，海边小屋的烟囱正在冒烟。"]], "chapter_hook": "钥匙还挂在玄关，小屋烟囱为何冒烟？"}, {"no": 5, "title": "海边小屋", "intro": [["nar", "海风拍打礁石，海边小屋静静立在坡上。"], ["margaret", "Edward 买下这小屋五年，从没带我来过。"], ["iris", "玄关钥匙没动，烟囱却冒着烟，说明有人有另一把。"], ["margaret", "走吧，无论里面是谁，我都该见一见。"]], "levels": [{"id": "L13", "title": "虚掩的木门", "hook": "没拿备用钥匙，烟囱怎飘着炊烟？", "post": [["iris", "木门虚掩着，台阶上还有刚踩过的新脚印。"], ["margaret", "她已经住进来了吗？进去看看吧。"]]}, {"id": "L14", "title": "留好的房间", "hook": "满屋崭新陈设，他在等谁住进来？", "post": [["margaret", "这窗帘和花瓶，全是我年轻时喜欢的样子。"], ["iris", "您看壁炉架上，摆着一只镶好的相框。"]]}, {"id": "L15", "title": "完整另一半", "hook": "壁炉上的相框，藏着哪一半真相？", "post": [["iris", "这是那张派对照片的原片，没撕过，取景更宽。"], ["margaret", "快拿下来，我得看清他另一只手拿着什么。"]]}], "story_pre": [["nar", "Iris 擦去玻璃上的浮灰，露出整张原片。"], ["margaret", "两年前那场派对，他到底在做什么？"]], "cap_dark": "他举着旧照，正把母亲指给她。", "cap_zoom": "未婚夫搂着她，这只是订婚宴。", "story_post": [["iris", "两年前她订婚，他只是以娘家人身份去送祝福。"], ["margaret", "那晚书房很暗，信封里只露出对折后的半张照。"], ["margaret", "我没展开就撕碎锁进抽屉，把钥匙扔进了纸箱。"], ["margaret", "我骂他背叛，他当晚就发病了……我竟只看了一半。"], ["nar", "木门轻推开，红发女人站在门口愣住了。"], ["claire", "五年前他找到我时，我怨您，一直不肯见您。"], ["claire", "他每周都来看我，替您求我原谅，一求就是五年。"], ["claire", "养父母不在了，前年订婚，他是唯一到场的娘家人。"], ["claire", "三周前我拿了他的钥匙住进来，可他却走了。"], ["claire", "我不敢贸然敲门，只好每天生火，等您自己来。"], ["nar", "她摘下戒指要还，Margaret 把手合了回去。"], ["claire", "我叫 Claire。他总说您没忘过我……是真的吗？"], ["margaret", "傻孩子，我哪一天忘过你。"], ["margaret", "房子不卖了。Iris，帮我把书房修好，她该回家了。"]], "chapter_hook": "母女重逢，书桌暗格却掉出旧档案。"}], "teaser": [["nar", "Iris 修书桌暗格，滑出个寻亲档案袋。"], ["nar", "袋里掉出半张旧照，她掏出随身半张一拼。"], ["iris", "两道撕口严丝合缝……这是我妈失踪前留的。"], ["iris", "她的照片，怎么会在这家寻亲档案所里？"], ["margaret", "Edward 当年就是托那里找到女儿的。"], ["margaret", "他说那儿藏着太多被抹去的名字。"]]}`;
+
+// case board: entries unlock by flags set during play
+const BOARD = {
+  questions:[
+    {q:'照片上的红发女人是谁', steps:[['s1','她靠着 Edward，手上戴着祖母绿戒指。'],['s2','不是前秘书 Cecily，她早就满头白发了。'],['s4','她是 Margaret 当年被迫送走的女儿。'],['s5','她叫 Claire。那是她两年前的订婚宴。']]},
+    {q:'那个婴儿的母亲是谁', steps:[['s3','抱孩子的人脸被烧掉了，领口别着 Hilda 的燕子胸针。'],['s4','是 19 岁的 Margaret。胸针是 Hilda 借给她壮胆的。']]},
+    {q:'谁撕了那张派对照片', steps:[['s1','撕得很碎，锁眼上还有撬痕。'],['c3','Hilda 半夜在烧东西。'],['s5','是 Margaret。那晚她只看见对折照片的一半。']]},
+    {q:'Edward 是怎么找到她的', steps:[['s4','阁楼里有一张寻亲档案所的收据。'],['s5','他找了五年，每周去看她，替妻子求原谅。']]},
+  ],
+  people:[
+    {id:'margaret', name:'Margaret', from:'start', face:[['start','bust:margaret']], role:[['start','委托人，后天就要卖房'],['s1','不许任何人看抽屉'],['s4','当年被迫送走女儿的母亲'],['s5','撕照片的人']], stamp:[['s1','hide','隐瞒'],['s5','true','坦白']]},
+    {id:'cecily', name:'Cecily', from:'c2', face:[['c2','crop:stOffice:.08:.27:.3'],['s2','crop:stOffice:.49:.18:.28']], role:[['c2','Edward 的前秘书，红发'],['s2','早就满头白发了']], stamp:[['c2','sus','嫌疑'],['s2','out','排除']]},
+    {id:'hilda', name:'Hilda', from:'c2', face:[['c2','bust:hilda']], role:[['c2','管家，做了 37 年'],['c3','半夜在烧东西'],['s3','胸针出现在照片上'],['s4','陪 Margaret 守了 37 年秘密']], stamp:[['c3','sus','嫌疑'],['s4','out','排除']]},
+    {id:'claire', name:'红发女人', from:'s1', rename:[['s5','Claire']], face:[['s1','bust:claire']], role:[['s1','派对上靠着 Edward'],['s4','Margaret 的女儿'],['s5','一直在海边小屋等妈妈']], stamp:[['s1','sus','身份不明'],['s4','true','母女']]},
+  ],
+};
+
+/* ================= state ================= */
+const $ = s => document.querySelector(s);
+const KEY = 'torn_portraits_v4';
+const DEF = {step:0, stars:0, coins:120, lives:5, hints:2, reno:0, flags:['start'], seen:{}, tutDone:0};
+let S = structuredClone(DEF), hadSave = false;
+try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j && typeof j.step === 'number') { S = Object.assign(structuredClone(DEF), j); hadSave = j.step > 0; } } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+let cur = 'title';
+const show = id => { cur = id; document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== id); };
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const src = k => IMG + PIC[k];
+const has = f => S.flags.includes(f);
+const flag = f => { if (!has(f)) { S.flags.push(f); save(); } };
+const IMGS = {};
+const loadImg = u => IMGS[u] || (IMGS[u] = new Promise(r => { const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = u; }));
+
+/* ================= audio ================= */
+let AC = null, MASTER = null;
+function ac() { if (!AC) { AC = new (window.AudioContext || window.webkitAudioContext)(); MASTER = AC.createGain(); MASTER.gain.value = .9; MASTER.connect(AC.destination); } if (AC.state === 'suspended') AC.resume(); return AC; }
+function tone(f, d, type, v, to, delay) {
+  try {
+    const A = ac(), o = A.createOscillator(), g = A.createGain(), t = A.currentTime + (delay || 0);
+    o.type = type || 'sine'; o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + d);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v || .07, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(MASTER); o.start(t); o.stop(t + d + .03);
+  } catch (e) {}
+}
+function noise(d, v, hp, delay) {
+  try {
+    const A = ac(), n = Math.floor(A.sampleRate * d), b = A.createBuffer(1, n, A.sampleRate), ch = b.getChannelData(0);
+    for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+    const s = A.createBufferSource(), f = A.createBiquadFilter(), g = A.createGain(), t = A.currentTime + (delay || 0);
+    f.type = hp ? 'highpass' : 'lowpass'; f.frequency.value = hp || 900; g.gain.value = v || .1;
+    s.buffer = b; s.connect(f); f.connect(g); g.connect(MASTER); s.start(t);
+  } catch (e) {}
+}
+// marimba-ish: sine + quiet octave partial, fast decay
+const mar = (f, v, delay) => { tone(f, .35, 'sine', v || .09, 0, delay); tone(f * 4, .08, 'sine', (v || .09) * .25, 0, delay); };
+const PENTA = [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568];
+let combo = 0, comboT = 0;
+const sfx = {
+  tap:  () => { tone(620, .05, 'triangle', .035); },
+  pick: () => { noise(.05, .05, 2500); tone(380, .05, 'triangle', .03); },
+  drop: () => { tone(210, .09, 'sine', .08, 150); noise(.04, .04, 1200); },
+  link: () => { const now = performance.now(); combo = now - comboT < 4000 ? Math.min(combo + 1, PENTA.length - 2) : 0; comboT = now; mar(PENTA[combo]); mar(PENTA[combo + 1] || 1568, .06, .07); },
+  bad:  () => tone(150, .14, 'triangle', .06, 110),
+  win:  () => { [523, 659, 784, 1047, 1319].forEach((f, i) => mar(f, .08, i * .085)); noise(.4, .03, 6000, .3); },
+  flip: () => { noise(.12, .06, 3000); tone(300, .25, 'triangle', .05, 700); },
+  rise: () => tone(110, 1.1, 'sawtooth', .025, 440),
+  hit:  () => { tone(70, 1.2, 'sine', .22, 40); tone(140, 1.4, 'triangle', .05); noise(.25, .12, 400); },
+  chord:() => [196, 247, 294, 392].forEach((f, i) => tone(f, 2.6, 'sine', .045, 0, i * .05)),
+  marker:() => noise(.5, .035, 1800),
+  stamp:() => { tone(90, .25, 'sine', .2, 50); noise(.08, .12, 600); },
+  paper:() => noise(.18, .05, 1500),
+  coin: () => { tone(1568, .12, 'square', .02); tone(2093, .18, 'square', .02, 0, .05); },
+  shimmer:() => { for (let i = 0; i < 10; i++) mar(PENTA[i % PENTA.length] * 2, .03, i * .06); },
+  star: () => { mar(1047, .09); mar(1568, .07, .08); },
+  tick: () => tone(1800, .03, 'square', .02),
+  timeup:() => { tone(330, .3, 'triangle', .07); tone(262, .5, 'triangle', .07, 0, .25); },
+};
+
+/* ================= fx canvas ================= */
+const FX = {c: null, x: null, ps: [], on: false};
+function fxInit() { FX.c = $('#fx'); FX.x = FX.c.getContext('2d'); const r = () => { const b = $('#app').getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); FX.c.width = b.width * d; FX.c.height = b.height * d; FX.x.setTransform(d, 0, 0, d, 0, 0); }; r(); addEventListener('resize', r); }
+function burst(x, y, n, opt) {
+  opt = opt || {};
+  const cols = opt.cols || ['#ffe28a', '#fff6d0', '#f2b23a', '#ffffff'];
+  for (let i = 0; i < n; i++) {
+    const a = opt.up ? -Math.PI / 2 + (Math.random() - .5) * 1.6 : Math.random() * Math.PI * 2, sp = (opt.speed || 3) * (.4 + Math.random());
+    FX.ps.push({x: x + (opt.w ? (Math.random() - .5) * opt.w : 0), y: y + (opt.h ? (Math.random() - .5) * opt.h : 0), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: opt.g ?? .08, life: 1, dec: .012 + Math.random() * .02, r: (opt.r || 3) * (.5 + Math.random()), c: cols[i % cols.length], star: Math.random() < .5});
+  }
+  if (!FX.on) { FX.on = true; requestAnimationFrame(fxLoop); }
+}
+function fxLoop() {
+  const x = FX.x, b = FX.c.getBoundingClientRect(); x.clearRect(0, 0, b.width, b.height);
+  FX.ps = FX.ps.filter(p => p.life > 0);
+  for (const p of FX.ps) {
+    p.x += p.vx; p.y += p.vy; p.vy += p.g; p.vx *= .985; p.life -= p.dec;
+    x.globalAlpha = Math.max(0, p.life); x.fillStyle = p.c;
+    if (p.star) { x.save(); x.translate(p.x, p.y); x.rotate(p.life * 6); x.beginPath(); for (let k = 0; k < 4; k++) { x.lineTo(0, -p.r * 2); x.rotate(Math.PI / 4); x.lineTo(0, -p.r * .6); x.rotate(Math.PI / 4); } x.fill(); x.restore(); }
+    else { x.beginPath(); x.arc(p.x, p.y, p.r, 0, 7); x.fill(); }
+  }
+  x.globalAlpha = 1;
+  if (FX.ps.length) requestAnimationFrame(fxLoop); else FX.on = false;
+}
+const appXY = el => { const a = $('#app').getBoundingClientRect(), b = el.getBoundingClientRect(); return [b.left - a.left + b.width / 2, b.top - a.top + b.height / 2, b.width, b.height]; };
+
+/* ================= room composer ================= */
+const RW = 900, RH = 1350, CACHE = {};
+function featherLayer(img, rects, fe) {
+  const c = document.createElement('canvas'); c.width = RW; c.height = RH; const x = c.getContext('2d');
+  x.save(); x.shadowColor = '#000'; x.shadowBlur = fe; x.shadowOffsetX = RW * 3;
+  rects.forEach(([rx, ry, rw, rh]) => {
+    const full = rx <= 0 && ry <= 0 && rw >= 1 && rh >= 1, inset = full ? -fe * 2 : fe * .55;
+    x.fillRect(rx * RW + inset - RW * 3, ry * RH + inset, rw * RW - inset * 2, rh * RH - inset * 2);
+  });
+  x.restore(); x.globalCompositeOperation = 'source-in'; x.drawImage(img, 0, 0, RW, RH);
+  return c;
+}
+async function roomCanvas(level) {
+  if (CACHE[level]) return CACHE[level];
+  const c = document.createElement('canvas'); c.width = RW; c.height = RH; const x = c.getContext('2d');
+  const before = await loadImg(src('roomBefore')), clean = await loadImg(src('roomClean'));
+  x.drawImage(before, 0, 0, RW, RH);
+  for (let k = 0; k < Math.min(level, 5); k++) x.drawImage(featherLayer(clean, RENO[k].rects, 70), 0, 0);
+  return CACHE[level] = c;
+}
+function cloneCanvas(c) { const d = document.createElement('canvas'); d.width = c.width; d.height = c.height; d.getContext('2d').drawImage(c, 0, 0); return d; }
+async function paintScene(box, level) {
+  const c = cloneCanvas(await roomCanvas(level));
+  box.innerHTML = ''; box.appendChild(c); return c;
+}
+// map image fraction -> px inside an object-fit:cover box
+function coverXY(box, fx, fy) {
+  const w = box.clientWidth, h = box.clientHeight, s = Math.max(w / RW, h / RH);
+  return [(w - RW * s) / 2 + fx * RW * s, (h - RH * s) / 2 + fy * RH * s];
+}
+function cropURL(img, fx, fy, fw, fh, size) {
+  const c = document.createElement('canvas'); c.width = c.height = size || 200; const iw = img.naturalWidth, ih = img.naturalHeight;
+  const sw = fw * iw, sh = (fh || fw * iw / ih) * ih, s = Math.min(sw, sh);
+  c.getContext('2d').drawImage(img, fx * iw, fy * ih, s, s, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', .85);
+}
+
+/* ================= flow ================= */
+let FLOW = [];
+function buildFlow() {
+  FLOW = [];
+  SCRIPT.chapters.forEach((ch, ci) => {
+    const c = ci + 1;
+    FLOW.push({t:'dlg', lines:ch.intro, ch:c, flag:'c' + c});
+    ch.levels.forEach((L, li) => {
+      FLOW.push({t:'lvl', id:L.id, ch:c, k:li});
+      if (L.post && L.post.length) FLOW.push({t:'dlg', lines:L.post, ch:c});
+    });
+    FLOW.push({t:'task', ch:c});
+    FLOW.push({t:'dlg', lines:ch.story_pre, ch:c});
+    FLOW.push({t:'story', id:'S' + c, ch:c});
+    FLOW.push({t:'dlg', lines:ch.story_post, ch:c, flag:'s' + c});
+    FLOW.push({t:'reno', ch:c});
+    FLOW.push({t:'chap', ch:c});
+  });
+  FLOW.push({t:'dlg', lines:SCRIPT.teaser, ch:5});
+  FLOW.push({t:'end'});
+}
+function next() { S.step++; save(); run(); }
+function run() {
+  const st = FLOW[S.step];
+  if (!st) return showEnd();
+  if (st.t === 'dlg') return playDialogue(st.lines, () => { if (st.flag) flag(st.flag); next(); });
+  if (st.t === 'lvl' || st.t === 'task') return showHome();
+  if (st.t === 'story') return startLevel(storyLevel(st.id), () => { flag('p' + st.id.slice(1)); next(); });
+  if (st.t === 'reno') return showReno(st.ch);
+  if (st.t === 'chap') return showChap(st.ch);
+  showEnd();
+}
+const chap = c => SCRIPT.chapters[c - 1];
+const lvText = id => { for (const ch of SCRIPT.chapters) for (const L of ch.levels) if (L.id === id) return L; return {}; };
+function storyLevel(id) { const c = +id.slice(1), ch = chap(c); return Object.assign({story:true, id, title:ST[id].name, hook:'', capDark:ch.cap_dark, capZoom:ch.cap_zoom}, ST[id]); }
+function level(id) { const t = lvText(id); return Object.assign({id, title:t.title, hook:t.hook}, LV[id]); }
+const lvNo = id => +id.slice(1);
+
+/* ================= ui pieces ================= */
+function hudHTML() {
+  return `<div class="cap-res" id="hLives"><img class="ico" src="${ic('heart')}" alt="">${S.lives}</div><div class="cap-res" id="hCoins"><img class="ico" src="${ic('coin')}" alt=""><span>${S.coins}</span></div>`;
+}
+function toast(t) { document.querySelectorAll('.toast').forEach(e => e.remove()); const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; $('#app').appendChild(d); setTimeout(() => d.remove(), 1900); }
+function countUp(el, from, to, ms) {
+  const t0 = performance.now(); const f = t => { const k = Math.min(1, (t - t0) / ms); el.textContent = Math.round(from + (to - from) * k); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f);
+}
+// centered modal; actions: [label, cls, fn, icon]
+function modal(o) {
+  const v = document.createElement('div'); v.className = 'veil';
+  v.innerHTML = `<div class="panel modal">${o.medal ? `<div class="medal"><img src="${o.medal}" alt=""></div>` : ''}${o.star ? `<img class="bigstar" src="${ic('star')}" alt="">` : ''}
+    ${o.close ? '<button class="x" aria-label="关闭">×</button>' : ''}<h3>${o.title}</h3>${o.html || ''}${o.text ? `<p>${o.text}</p>` : ''}</div>`;
+  const m = v.firstChild;
+  (o.actions || []).forEach(([label, cls, fn, icon]) => {
+    const b = document.createElement('button'); b.className = 'btn ' + (cls || ''); b.innerHTML = (icon ? `<img class="bi" src="${icon}" alt="">` : '') + label;
+    b.onclick = () => { sfx.tap(); v.remove(); fn && fn(); };
+    m.appendChild(b);
+  });
+  if (o.close) m.querySelector('.x').onclick = () => { sfx.tap(); v.remove(); o.close(); };
+  $('#app').appendChild(v); return v;
+}
+function fakeAd(done) {
+  const a = document.createElement('div'); a.className = 'ad';
+  a.innerHTML = '<div>广告（演示）<b>3</b>正式版这里播一条激励视频</div>';
+  $('#app').appendChild(a);
+  let n = 3; const t = setInterval(() => { n--; if (n <= 0) { clearInterval(t); a.remove(); done(); } else a.querySelector('b').textContent = n; }, 700);
+}
+
+/* ================= home ================= */
+async function showHome() {
+  const st = FLOW[S.step], c = st.ch, ch = chap(c);
+  const box = $('#homeScene');
+  await paintScene(box, S.reno);
+  show('home');
+  if (S.reno < 5) { // glowing marker on the area this chapter will restore
+    const r = RENO[S.reno].rects[0], [mx, my] = coverXY(box, r[0] + r[2] / 2, r[1] + r[3] / 2);
+    const m = document.createElement('div'); m.className = 'marker'; m.style.left = mx + 'px'; m.style.top = Math.max(120, my) + 'px'; m.innerHTML = `<img src="${ic('star')}" alt="">`; box.appendChild(m);
+  }
+  $('#homeHud').innerHTML = hudHTML() + `<div class="spacer"></div><button class="rb" id="boardBtn" aria-label="案件板"><img src="${ic('board')}" alt=""><span class="lbl">案件板</span>${S.flags.some(f => !S.seen[f]) ? '<span class="dot"></span>' : ''}</button>`;
+  const shown = S.justWon ? S.stars - 1 : S.stars;
+  $('#chRib').innerHTML = `<span class="t">第 ${c} 章 · ${ch.title}</span><span class="slots" id="slots">${[0,1,2].map(i => `<img src="${ic(i < shown ? 'star' : 'star_empty')}" alt="">`).join('')}</span>`;
+  $('#chSub').textContent = S.reno < 5 ? `整理书房 ${S.reno}/5 · 下一处：${RENO[S.reno].title}` : "书房收拾好了";
+  const curK = st.t === 'lvl' ? st.k : 3, card = $('#lvCard'), go = $('#goBtn');
+  if (st.t === 'lvl') {
+    const L = level(st.id);
+    card.innerHTML = `<div class="th" style="background-image:url(${src(L.pic)})"></div><div style="min-width:0"><div class="kicker">第 ${lvNo(L.id)} 关${L.hard ? '<span class="hard">难关</span>' : ''}</div><h3>${L.title}</h3><p>${L.hook}</p></div>`;
+    go.className = 'btn' + (L.hard ? ' gold' : ''); go.innerHTML = L.tut ? '开始' : `开始<small>过关得 ★</small>`;
+    go.onclick = () => { sfx.tap(); if (S.lives <= 0) return lifeModal(); startLevel(L, () => { S.stars++; S.coins += L.hard ? 30 : 20; S.justWon = 1; next(); }); };
+  } else {
+    const sl = ST['S' + c];
+    card.innerHTML = `<div class="th story" style="background-image:url(${UI}photo_back.webp)"></div><div style="min-width:0"><div class="kicker">剧情照片</div><h3>${sl.name}</h3><p>三颗星集齐了。拼好它，看看藏着什么。</p></div>`;
+    go.className = 'btn gold pulse'; go.innerHTML = '拼剧情照片';
+    go.onclick = () => { sfx.star(); S.stars = 0; next(); };
+  }
+  $('#boardBtn').onclick = () => { sfx.paper(); showBoard(showHome); };
+  $('#chRib').onclick = () => chapterSheet(c, curK);
+  show('home');
+  if (S.justWon) { S.justWon = 0; save(); await wait(250); flyStar(); }
+}
+function flyStar() {
+  const slots = $('#slots').children, target = slots[Math.min(2, S.stars - 1)]; if (!target) return;
+  const a = $('#app').getBoundingClientRect(), [tx, ty] = appXY(target), sx = a.width / 2, sy = a.height * .45;
+  const s = document.createElement('img'); s.className = 'flystar'; s.src = ic('star'); s.style.left = sx + 'px'; s.style.top = sy + 'px'; $('#app').appendChild(s);
+  sfx.star();
+  s.animate([{transform:'translate(0,0) scale(.2) rotate(-90deg)', opacity:0}, {transform:'translate(0,-30px) scale(1.4) rotate(0)', opacity:1, offset:.3}, {transform:`translate(${tx - sx}px,${ty - sy}px) scale(.4) rotate(200deg)`, opacity:1}], {duration:900, easing:'cubic-bezier(.5,0,.4,1)'}).onfinish = () => {
+    s.remove(); target.src = ic('star'); target.classList.add('pop'); burst(tx, ty, 18, {speed:3}); sfx.coin();
+    if (S.stars >= 3) { const g = $('#goBtn'); }
+  };
+}
+function chapterSheet(c, curK) {
+  const ch = chap(c);
+  const rows = ch.levels.map((L, k) => `<div style="display:flex;align-items:center;gap:10px;text-align:left;opacity:${k > curK ? .55 : 1}"><img class="ico" src="${ic(k < curK ? 'star' : k === curK ? 'star_empty' : 'lock')}" alt=""><b style="font-family:var(--cn-serif);flex:1">${L.title}</b>${LV[L.id].hard ? '<span class="hard">难关</span>' : ''}</div>`).join('')
+    + `<div style="display:flex;align-items:center;gap:10px;text-align:left;opacity:${curK < 3 ? .55 : 1}"><img class="ico" src="${ic(curK < 3 ? 'lock' : 'photo')}" alt=""><b style="font-family:var(--cn-serif);flex:1">剧情照片</b></div>`;
+  modal({title:`第 ${c} 章 · ${ch.title}`, html:`<div style="display:flex;flex-direction:column;gap:12px;width:100%;margin:6px 0">${rows}</div>`, actions:[['好的', 'cream']]});
+}
+function lifeModal() {
+  modal({title:'体力用完了', medal:ic('heart'), text:'过不了关会扣 1 点体力', actions:[['看广告 · 体力 +1', '', () => fakeAd(() => { S.lives++; save(); showHome(); }), ic('photo')]], close:() => {}});
+}
+
+/* ================= dialogue ================= */
+function markKeywords(t) {
+  const esc = t.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+  const re = new RegExp('(' + KEYWORDS.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'g');
+  return esc.replace(re, '<em>$1</em>');
+}
+async function playDialogue(lines, done) {
+  await paintScene($('#dlgScene'), S.reno);
+  const busts = $('#busts');
+  busts.innerHTML = Object.keys(WHO).map(k => `<img class="${WHO[k].side}" data-who="${k}" src="${src(k)}" alt="">`).join('');
+  let i = -1, typing = null, full = '', other = null, claireNamed = has('s5');
+  const nm = $('#dName'), ln = $('#dLine'), more = $('#more');
+  const finishType = () => { clearInterval(typing); typing = null; ln.innerHTML = markKeywords(full); more.classList.add('on'); };
+  const step = () => {
+    if (typing) return finishType();
+    i++;
+    if (i >= lines.length) { $('#dlg').onclick = null; return done(); }
+    const [who, text] = lines[i], w = WHO[who];
+    if (who === 'claire' && text.includes('我叫 Claire')) claireNamed = true;
+    if (w && who !== 'iris') other = who;
+    if (!other) other = (lines.slice(i).find(([k]) => k !== 'iris' && WHO[k]) || [])[0] || null;
+    $('#bubble').classList.toggle('nar', !w);
+    nm.hidden = !w;
+    if (w) {
+      const name = who === 'claire' ? (claireNamed ? 'Claire' : w.n) : w.n, role = who === 'claire' && claireNamed ? 'Margaret 的女儿' : w.role;
+      nm.innerHTML = `${name}${role ? `<small>${role}</small>` : ''}`; nm.className = 'nametag ' + (w.side === 'r' ? 'r' : '');
+    }
+    busts.querySelectorAll('img').forEach(im => { const k = im.dataset.who; im.className = WHO[k].side + (k === who ? ' on' : (w && (k === 'iris' || k === other) ? ' in' : '')); });
+    full = text; more.classList.remove('on'); ln.textContent = '';
+    let n = 0; typing = setInterval(() => { n++; ln.textContent = full.slice(0, n); if (n % 3 === 0) tone(900 + Math.random() * 200, .02, 'sine', .012); if (n >= full.length) finishType(); }, 26);
+  };
+  $('#dlg').onclick = step;
+  $('#skipBtn').onclick = e => { e.stopPropagation(); clearInterval(typing); $('#dlg').onclick = null; done(); };
+  show('dlg'); step();
+}
+
+/* ================= chapter card ================= */
+async function showChap(c) {
+  const ch = chap(c), nx = chap(c + 1), sl = ST['S' + c];
+  await paintScene($('#chapScene'), S.reno);
+  const firstTime = !S.seen['chap' + c];
+  $('#chapOver').innerHTML = `<div class="panel postcard">
+    <div class="kicker">第 ${c} 章 · 完</div><h2>${ch.title === 'C.' ? '「C.」' : ch.title}</h2>
+    <div class="pol"><span class="tape"></span><div class="ph" style="background-image:url(${src(sl.pic)})"></div><div class="lb">${sl.label}</div></div>
+    <div class="hook">${ch.chapter_hook}</div>
+    <div class="chdots">${[1,2,3,4,5].map(i => `<i class="${i <= c ? 'done' : ''}"></i>`).join('')}</div>
+    <div class="reward"><img class="gift" src="${ic('gift')}" alt=""><span class="gains"><span><img class="ico" src="${ic('coin')}" alt="">+${CH_REWARD.coins}</span><span><img class="ico" src="${ic('loupe')}" alt="">+${CH_REWARD.hints}</span></span></div></div>
+    <div class="btnwrap"><button class="btn" id="chapGo">${nx ? `下一章：${nx.title}` : '继续'}</button>
+    <button class="btn cream" id="chapBoard">看案件板</button></div>`;
+  if (firstTime) { S.seen['chap' + c] = 1; S.coins += CH_REWARD.coins; S.hints += CH_REWARD.hints; save(); }
+  $('#chapGo').onclick = () => { sfx.tap(); next(); };
+  $('#chapBoard').onclick = () => { sfx.paper(); showBoard(() => showChap(c)); };
+  show('chap'); sfx.win();
+  await wait(400); const [gx, gy] = appXY($('#chapOver .gift')); burst(gx, gy, 30, {up:true, speed:5, g:.12});
+}
+
+/* ================= board ================= */
+const latest = arr => { let v = null; (arr || []).forEach(([f, x, y]) => { if (has(f)) v = y === undefined ? x : [x, y]; }); return v; };
+const latestFlag = arr => { let v = null; (arr || []).forEach(([f]) => { if (has(f)) v = f; }); return v; };
+async function faceURL(spec) {
+  const [kind, a, x, y, w] = spec.split(':');
+  if (kind === 'bust') return src(a);
+  const im = await loadImg(src(a)); return im ? cropURL(im, +x, +y, +w, 0, 240) : '';
+}
+async function showBoard(back) {
+  const fresh = f => !S.seen[f];
+  const qs = BOARD.questions.map(Q => {
+    const got = Q.steps.filter(([f]) => has(f)); if (!got.length) return '';
+    const ok = has(Q.steps[Q.steps.length - 1][0]), isNew = got.some(([f]) => fresh(f));
+    return `<div class="note ${ok ? 'solved' : ''} ${isNew ? 'new' : ''}"><img class="pin" src="${UI}pin_red.png" alt=""><b><i>${ok ? '✓' : '?'}</i>${Q.q}</b>${got.map(([, t], i) => `<span class="${i === got.length - 1 ? 'a' : ''}">${t}</span>`).join('')}</div>`;
+  }).join('');
+  const ppl = [];
+  for (const p of BOARD.people.filter(p => has(p.from))) {
+    const role = latest(p.role), st = latest(p.stamp), stF = latestFlag(p.stamp), nm = latest(p.rename) || p.name, face = await faceURL(latest(p.face));
+    ppl.push(`<div class="pp"><img class="pin" src="${UI}pin_brass.png" alt=""><div class="face" style="background-image:url(${face});background-position:${face.startsWith('data:') ? 'center' : 'center 8%'};background-size:${face.startsWith('data:') ? 'cover' : '150%'}"></div><b>${nm}</b><span>${role}</span>${st ? `<i class="stamp ${st[0]} ${fresh(stF) ? 'slam' : ''}">${st[1]}</i>` : ''}</div>`);
+  }
+  const pols = [1,2,3,4,5].map(c => has('p' + c)
+    ? `<button class="pol" data-pic="${ST['S' + c].pic}"><span class="tape"></span><div class="ph" style="background-image:url(${src(ST['S' + c].pic)})"></div><div class="lb">${ST['S' + c].label}</div></button>`
+    : `<div class="pol empty"><div class="ph"></div><div class="lb">?</div></div>`).join('');
+  $('#boardOver').innerHTML = `<div class="bhead"><button class="rb wood" id="bBack" aria-label="返回"><b style="color:#fff3dc;font-size:26px;margin-top:-6px">‹</b></button><div class="ribbon">案件板</div></div>
+    <div class="sech">疑问</div><div class="notes">${qs || '<div class="note"><span>还没有线索。</span></div>'}</div>
+    <div class="sech">人物</div><div class="people">${ppl.join('')}</div>
+    <div class="sech">证据照片</div><div class="pols">${pols}</div>`;
+  const slams = $('#boardOver').querySelectorAll('.stamp.slam');
+  S.flags.forEach(f => S.seen[f] = 1); save();
+  $('#bBack').onclick = () => { sfx.tap(); back(); };
+  $('#boardOver').querySelectorAll('button.pol').forEach(b => b.onclick = () => {
+    sfx.paper(); const v = document.createElement('div'); v.className = 'viewer'; v.innerHTML = `<img src="${IMG}${PIC[b.dataset.pic]}" alt="">`;
+    v.onclick = () => v.remove(); $('#app').appendChild(v);
+  });
+  $('#boardOver').scrollTop = 0;
+  show('board');
+  slams.forEach((s, i) => { s.style.animationDelay = (.35 + i * .35) + 's'; setTimeout(sfx.stamp, 350 + i * 350); });
+}
+
+/* ================= renovation ================= */
+// rub-to-clean: the clean state sits underneath, the current state is an erasable layer on top
+async function showReno(c) {
+  const R = RENO[c - 1], box = $('#renoScene'), tray = $('#tray');
+  $('#reno').classList.remove('done');
+  show('reno');
+  await paintScene(box, c);                                   // underneath: after
+  const top = cloneCanvas(await roomCanvas(c - 1)); box.appendChild(top);   // on top: before
+  const tx = top.getContext('2d');
+  $('#renoTitle').textContent = `整理书房 ${c}/5 · ${R.title}`;
+  tray.innerHTML = `<div class="one"><img src="${ic('loupe')}" alt="" style="width:44px;height:44px"><div style="flex:1"><p><b style="color:var(--ink)">用手指来回擦</b></p><div class="prog" style="margin-top:6px"><b id="rubP" style="width:0"></b></div></div></div>`;
+  // keep the rub area inside what the cover-cropped screen actually shows
+  const vis = (() => { const w = box.clientWidth, h = box.clientHeight, k = Math.max(w / RW, h / RH), ox = (RW * k - w) / 2 / (RW * k), oy = (RH * k - h) / 2 / (RH * k); return [ox + .04, oy + .1, 1 - ox - .04, 1 - oy - .12]; })();
+  const ax0 = Math.max(R.rub[0], vis[0]), ay0 = Math.max(R.rub[1], vis[1]), ax1 = Math.min(R.rub[0] + R.rub[2], vis[2]), ay1 = Math.min(R.rub[1] + R.rub[3], vis[3]);
+  const [rx, ry, rw, rh] = [ax0, ay0, Math.max(.08, ax1 - ax0), Math.max(.08, ay1 - ay0)];
+  window.RUB = [rx, ry, rw, rh];
+  // brief ghost hand over the area
+  const [hx0, hy0] = coverXY(box, rx + rw * .2, ry + rh * .5), [hx1] = coverXY(box, rx + rw * .8, ry + rh * .5);
+  const hand = document.createElement('div'); hand.className = 'hand'; hand.style.left = hx0 + 'px'; hand.style.top = hy0 + 'px'; hand.style.position = 'absolute';
+  hand.innerHTML = '<svg viewBox="0 0 64 64"><path d="M22 34V12a5 5 0 0 1 10 0v16l2-1a5 5 0 0 1 6 2l1 1a5 5 0 0 1 6 2l1 1a5 5 0 0 1 6 3v12c0 9-6 15-15 15h-3c-6 0-10-3-13-8l-7-12a4.5 4.5 0 0 1 7-5z" fill="#fffaf0" stroke="#3a2c22" stroke-width="3" stroke-linejoin="round"/></svg>';
+  box.appendChild(hand);
+  const ha = hand.animate([{transform:'translate(0,0)'}, {transform:`translate(${hx1 - hx0}px,-10px)`}, {transform:'translate(0,0)'}], {duration:1300, iterations:Infinity, easing:'ease-in-out'});
+  // sample points inside the rub area; done when most are wiped
+  const pts = []; for (let i = 0; i < 14; i++) for (let j = 0; j < 10; j++) pts.push([Math.round((rx + rw * (i + .5) / 14) * RW), Math.round((ry + rh * (j + .5) / 10) * RH)]);
+  const toImg = (px, py) => { const w = box.clientWidth, h = box.clientHeight, s = Math.max(w / RW, h / RH); return [(px - (w - RW * s) / 2) / s, (py - (h - RH * s) / 2) / s, s]; };
+  let down = false, last = null, moves = 0, finished = false, lastSnd = 0;
+  const brush = 34 / Math.max(box.clientWidth / RW, box.clientHeight / RH);   // ~34 screen px radius
+  const wipe = (x, y) => {
+    tx.save(); tx.beginPath(); tx.rect(rx * RW - 40, ry * RH - 40, rw * RW + 80, rh * RH + 80); tx.clip();
+    tx.globalCompositeOperation = 'destination-out';
+    const g = tx.createRadialGradient(x, y, 0, x, y, brush); g.addColorStop(0, 'rgba(0,0,0,.9)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    tx.fillStyle = g; tx.beginPath(); tx.arc(x, y, brush, 0, 7); tx.fill(); tx.restore();
+  };
+  const progress = () => { let k = 0; for (const [x, y] of pts) if (tx.getImageData(x, y, 1, 1).data[3] < 110) k++; return k / pts.length; };
+  const done = async () => {
+    finished = true; $('#reno').classList.add('done'); top.style.transition = 'opacity 1s'; top.style.opacity = 0;
+    const r = R.rects[0], [x0, y0] = coverXY(box, r[0], r[1]), [x1, y1] = coverXY(box, r[0] + Math.min(r[2], 1), r[1] + Math.min(r[3], 1));
+    burst((x0 + x1) / 2, (y0 + y1) / 2, 60, {w: Math.min(x1 - x0, box.clientWidth), h: Math.min(y1 - y0, box.clientHeight), g: -.03, speed: 1.1});
+    sfx.shimmer(); await wait(1600); sfx.win(); toast(c === 5 ? '书房收拾好了' : R.title + ' ✓');
+    await wait(900); S.reno = c; next();
+  };
+  const at = e => { const b = box.getBoundingClientRect(); return toImg(e.clientX - b.left, e.clientY - b.top); };
+  box.onpointerdown = e => { if (finished) return; down = true; last = at(e); ha.cancel(); hand.remove(); try { box.setPointerCapture(e.pointerId); } catch (err) {} };
+  box.onpointermove = e => {
+    if (!down || finished) return;
+    const [x, y] = at(e), [lx, ly] = last, d = Math.hypot(x - lx, y - ly), steps = Math.max(1, Math.ceil(d / (brush * .4)));
+    for (let i = 1; i <= steps; i++) wipe(lx + (x - lx) * i / steps, ly + (y - ly) * i / steps);
+    last = [x, y];
+    const b = box.getBoundingClientRect(), a = $('#app').getBoundingClientRect();
+    if (Math.random() < .35) burst(e.clientX - a.left, e.clientY - a.top, 2, {cols:['#cbb89a', '#a8957a', '#e8dcc6'], speed:1.6, g:.12, r:2});
+    const now = performance.now(); if (now - lastSnd > 110) { lastSnd = now; noise(.09, .025, 2200); }
+    if (++moves % 8 === 0) { const p = progress(); $('#rubP').style.width = Math.min(100, p / .6 * 100) + '%'; if (p >= .6) done(); }
+  };
+  box.onpointerup = box.onpointercancel = () => { down = false; };
+  show('reno');
+}
+async function showEnd() {
+  await paintScene($('#endScene'), 5);
+  $('#againBtn').onclick = () => { S = structuredClone(DEF); save(); for (const k in CACHE) delete CACHE[k]; run(); };
+  const h = $('#halves'); h.classList.remove('join');
+  show('end');
+  await wait(700); h.classList.add('join'); await wait(1500); sfx.hit(); const [x, y] = appXY(h); burst(x, y, 30, {speed:4});
+}
+
+/* ================= puzzle ================= */
+let G = null;
+const fmt = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+function startLevel(L, onWin) {
+  const n = L.n, N = n * n, frame = $('#frame'), story = !!L.story;
+  $('#play').classList.remove('cine');
+  document.querySelectorAll('#play .hand,#play .tip,#play .praise').forEach(e => e.remove());
+  $('#playBg').style.backgroundImage = `url(${UI}${story ? 'bg_velvet' : 'bg_desk'}.webp)`;
+  show('play');
+  const stage = document.querySelector('#play .stage');
+  const availW = stage.clientWidth - 44, availH = stage.clientHeight - (story ? 130 : 84);
+  let tw = Math.floor(Math.min(availW, availH * 2 / 3) / n / 2) * 2; if (tw < 20) tw = 20;
+  const th = tw * 1.5, W = tw * n, H = th * n, f = L.f || 1, cx = L.cx || 0, cy = L.cy || 0;
+  frame.style.width = W + 'px'; frame.style.height = H + 'px'; frame.innerHTML = '';
+  frame.className = 'frame' + (story ? ' story' : ''); frame.dataset.label = story ? L.name : '';
+  $('#cap').innerHTML = '';
+  $('#lvLabel').innerHTML = story ? `<small>第 ${L.id.slice(1)} 章 · 剧情照片</small><b>${L.title}</b>` : `<small>第 ${lvNo(L.id)} 关${L.hard ? ' · 难关' : ''}</small><b>${L.title}</b>`;
+  $('#hookline').textContent = story ? `不限时 · ${L.dark.length} 张暗牌会在最后翻开` : (L.hook || '');
+  $('#tools').style.visibility = 'visible';
+  $('#peekBtn').hidden = story; $('#hintBtn').hidden = false;
+  const tb = $('#tbar'); tb.className = 'tbar' + (L.time ? '' : ' off'); tb.firstChild.style.transform = 'scaleX(1)';
+  const img = src(L.pic);
+
+  const locked = new Set(L.dark || []);
+  const perm = Array.from({length: N}, (_, i) => i);
+  const free = perm.filter(i => !locked.has(i));
+  const linked = (p, a, b, horiz) => !locked.has(a) && !locked.has(b) && (horiz ? (p[b] === p[a] + 1 && p[a] % n !== n - 1) : p[b] === p[a] + n);
+  const countLinks = p => { let k = 0; for (let i = 0; i < N; i++) { if (i % n < n - 1 && linked(p, i, i + 1, true)) k++; if (i + n < N && linked(p, i, i + n, false)) k++; } return k; };
+  for (let tries = 0; tries < 400; tries++) {
+    const ids = free.slice();
+    for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
+    free.forEach((cell, k) => perm[cell] = ids[k]);
+    if (countLinks(perm) === 0 && free.every(c => perm[c] !== c)) break;
+  }
+  const bgSize = `${W / f}px ${H / f}px`, bx = id => -(cx * W / f + (id % n) * tw), by = id => -(cy * H / f + Math.floor(id / n) * th);
+  const els = [];
+  for (let id = 0; id < N; id++) {
+    const e = document.createElement('div'); e.className = 'tile' + (locked.has(id) ? ' dark' : ''); e.dataset.id = id;
+    e.style.width = tw + 'px'; e.style.height = th + 'px';
+    e.style.backgroundImage = `url(${img})`; e.style.backgroundSize = bgSize;
+    e.style.backgroundPosition = `${bx(id)}px ${by(id)}px`;
+    if (locked.has(id)) e.innerHTML = '<div class="back"></div>';
+    frame.appendChild(e); els.push(e);
+  }
+  const whole = document.createElement('div'); whole.className = 'whole'; whole.style.backgroundImage = `url(${img})`; whole.style.backgroundSize = bgSize; whole.style.backgroundPosition = `${bx(0)}px ${by(0)}px`; frame.appendChild(whole);
+  const g = G = {L, perm, els, over: false, paused: false, left: L.time || 0, total: L.time || 0, links: 0, img, bgSize, bx0: bx(0), by0: by(0), moved: 0};
+  const placed = () => perm.filter((v, i) => v === i && !locked.has(i)).length;
+  const timerBox = $('#timerBox');
+  const drawTimer = () => {
+    if (L.time) timerBox.innerHTML = `<div class="timer ${g.left <= 10 ? 'low' : ''}"><img class="ico" src="${ic('hourglass')}" alt="">${fmt(g.left)}</div>`;
+    else timerBox.innerHTML = `<div class="timer"><img class="ico" src="${ic(story ? 'photo' : 'star')}" alt="">${placed()}/${N - locked.size}</div>`;
+  };
+
+  function refresh(flash) {
+    const before = g.links; g.links = countLinks(perm);
+    const newly = [];
+    for (let cell = 0; cell < N; cell++) {
+      const e = els[perm[cell]], r = Math.floor(cell / n), c = cell % n;
+      const Lk = c > 0 && linked(perm, cell - 1, cell, true), Rk = c < n - 1 && linked(perm, cell, cell + 1, true);
+      const Tk = r > 0 && linked(perm, cell - n, cell, false), Bk = r < n - 1 && linked(perm, cell, cell + n, false);
+      const gp = 1, rd = 3;
+      e.style.clipPath = `inset(${Tk ? 0 : gp}px ${Rk ? 0 : gp}px ${Bk ? 0 : gp}px ${Lk ? 0 : gp}px round ${(!Tk && !Lk) ? rd : 0}px ${(!Tk && !Rk) ? rd : 0}px ${(!Bk && !Rk) ? rd : 0}px ${(!Bk && !Lk) ? rd : 0}px)`;
+      e.style.translate = `${c * tw}px ${r * th}px`;
+      e.classList.remove('drag');
+      if (flash && !locked.has(cell) && flash.has(cell) && (Lk || Rk || Tk || Bk)) { e.classList.remove('snap'); void e.offsetWidth; e.classList.add('snap'); newly.push(cell); }
+    }
+    if (flash) {
+      if (g.links > before) {
+        sfx.link();
+        const fr = frame.getBoundingClientRect(), a = $('#app').getBoundingClientRect();
+        newly.forEach(cell => burst(fr.left - a.left + (cell % n + .5) * tw, fr.top - a.top + (Math.floor(cell / n) + .5) * th, 6, {speed:2.2, r:2.5}));
+        if (g.links - before >= 3) praise(['Nice!', 'Great!', 'Perfect!'][Math.min(2, g.links - before - 3)]);
+      } else sfx.drop();
+    }
+    if (!L.time) drawTimer();
+  }
+  function praise(t) { const p = document.createElement('div'); p.className = 'praise'; p.textContent = t; p.style.left = '50%'; p.style.top = '45%'; $('#play').appendChild(p); setTimeout(() => p.remove(), 1000); }
+  function groupOf(cell) {
+    const seen = new Set([cell]), q = [cell];
+    while (q.length) {
+      const a = q.pop(), r = Math.floor(a / n), c = a % n;
+      const tryAdd = (b, ok) => { if (ok && !seen.has(b)) { seen.add(b); q.push(b); } };
+      tryAdd(a - 1, c > 0 && linked(perm, a - 1, a, true)); tryAdd(a + 1, c < n - 1 && linked(perm, a, a + 1, true));
+      tryAdd(a - n, r > 0 && linked(perm, a - n, a, false)); tryAdd(a + n, r < n - 1 && linked(perm, a, a + n, false));
+    }
+    return [...seen];
+  }
+  const solved = () => perm.every((v, i) => v === i);
+  function move(group, dr, dc) {
+    const gs = new Set(group), targets = [];
+    for (const c0 of group) {
+      const r = Math.floor(c0 / n) + dr, c = c0 % n + dc;
+      if (r < 0 || r >= n || c < 0 || c >= n) return false;
+      const t = r * n + c; if (locked.has(t)) return false; targets.push(t);
+    }
+    const ts = new Set(targets);
+    const displaced = targets.filter(t => !gs.has(t)).sort((a, b) => a - b), vacated = group.filter(c => !ts.has(c)).sort((a, b) => a - b);
+    const np = perm.slice();
+    group.forEach((c0, i) => np[targets[i]] = perm[c0]);
+    displaced.forEach((d, i) => np[vacated[i]] = perm[d]);
+    for (let i = 0; i < N; i++) perm[i] = np[i];
+    refresh(new Set([...targets, ...vacated]));
+    g.moved++; clearTut();
+    if (solved()) finish();
+    return true;
+  }
+  g.hint = () => {
+    let i = -1;
+    for (let c = 0; c < N && i < 0; c++) if (!locked.has(c) && perm[c] !== c) i = c;
+    if (i < 0) return;
+    const j = perm.indexOf(i); [perm[i], perm[j]] = [perm[j], perm[i]];
+    refresh(new Set([i, j])); els[i].classList.add('hinted'); setTimeout(() => els[i].classList.remove('hinted'), 1800);
+    if (solved()) finish();
+  };
+  g.solve = () => { for (let i = 0; i < N; i++) perm[i] = i; refresh(new Set()); finish(); };
+
+  // tutorial: ghost hand drags one tile to its true cell
+  let tutEls = [];
+  function clearTut() { tutEls.forEach(e => e.remove()); tutEls = []; if (g.tutAnim) g.tutAnim.cancel(); }
+  async function showTut() {
+    await wait(700); if (g.moved || g.over) return;
+    const id = perm.find((v, i) => v !== i && !locked.has(v)), from = perm.indexOf(id), to = id;
+    const fr = frame.getBoundingClientRect(), st = stage.getBoundingClientRect();
+    const p = c => [fr.left - st.left + (c % n + .5) * tw, fr.top - st.top + (Math.floor(c / n) + .5) * th];
+    const [x0, y0] = p(from), [x1, y1] = p(to);
+    const h = document.createElement('div'); h.className = 'hand'; h.style.left = x0 + 'px'; h.style.top = y0 + 'px';
+    h.innerHTML = '<svg viewBox="0 0 64 64"><path d="M22 34V12a5 5 0 0 1 10 0v16l2-1a5 5 0 0 1 6 2l1 1a5 5 0 0 1 6 2l1 1a5 5 0 0 1 6 3v12c0 9-6 15-15 15h-3c-6 0-10-3-13-8l-7-12a4.5 4.5 0 0 1 7-5z" fill="#fffaf0" stroke="#3a2c22" stroke-width="3" stroke-linejoin="round"/></svg>';
+    const tip = document.createElement('div'); tip.className = 'tip'; tip.textContent = '拖动碎片，交换位置'; tip.style.top = (fr.bottom - st.top + 18) + 'px';
+    stage.appendChild(h); stage.appendChild(tip); tutEls = [h, tip];
+    g.tutAnim = h.animate([{transform:'translate(0,0) scale(1)', opacity:0}, {transform:'translate(0,0) scale(.9)', opacity:1, offset:.15}, {transform:`translate(${x1 - x0}px,${y1 - y0}px) scale(.9)`, opacity:1, offset:.7}, {transform:`translate(${x1 - x0}px,${y1 - y0}px) scale(1)`, opacity:0}], {duration:1800, iterations:Infinity, easing:'ease-in-out'});
+  }
+
+  let drag = null;
+  frame.onpointerdown = e => {
+    if (g.over || g.paused || drag) return;
+    const t = e.target.closest('.tile'); if (!t) return;
+    if (t.classList.contains('dark')) { t.classList.remove('shake'); void t.offsetWidth; t.classList.add('shake'); sfx.bad(); toast('四周拼好，它会自己翻开'); return; }
+    const cell = perm.indexOf(+t.dataset.id), group = groupOf(cell);
+    drag = {x: e.clientX, y: e.clientY, group, id: e.pointerId};
+    try { frame.setPointerCapture(e.pointerId); } catch (err) {}
+    group.forEach(c => els[perm[c]].classList.add('drag')); sfx.pick();
+  };
+  frame.onpointermove = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    drag.group.forEach(c => els[perm[c]].style.translate = `${(c % n) * tw + dx}px ${Math.floor(c / n) * th + dy}px`);
+  };
+  const up = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dc = Math.round((e.clientX - drag.x) / tw), dr = Math.round((e.clientY - drag.y) / th), group = drag.group; drag = null;
+    if (g.over || (!dc && !dr) || !move(group, dr, dc)) { if (dc || dr) sfx.bad(); refresh(); }
+  };
+  frame.onpointerup = up; frame.onpointercancel = up;
+
+  clearInterval(g.tick);
+  let lastSec = 99;
+  if (L.time) g.tick = setInterval(() => {
+    if (g.over || g.paused) return;
+    g.left -= .1;
+    const k = Math.max(0, g.left / g.total); tb.firstChild.style.transform = `scaleX(${k})`;
+    tb.className = 'tbar' + (g.left <= 15 ? ' low' : g.left <= 30 ? ' mid' : '');
+    const s = Math.ceil(g.left); if (s !== lastSec) { lastSec = s; drawTimer(); if (s <= 10 && s > 0) sfx.tick(); }
+    if (g.left <= 0) timeUp();
+  }, 100);
+
+  function timeUp() {
+    g.paused = true; sfx.timeup();
+    const pct = Math.round(placed() / (N - locked.size) * 100);
+    modal({title:pct >= 50 ? '差一点就拼好了' : '时间到了', medal:ic('hourglass'), html:`<div class="prog"><b style="width:${pct}%"></b><span>已拼好 ${pct}%</span></div>`,
+      actions:[
+        ['看广告 +30 秒', '', () => fakeAd(() => { g.left = 30; g.total = Math.max(g.total, 30); g.paused = false; drawTimer(); }), ic('photo')],
+        [`<span style="display:flex;align-items:center;gap:6px"><img class="ico" src="${ic('coin')}" alt="">80 +30 秒</span>`, 'gold', () => { if (S.coins >= 80) { S.coins -= 80; save(); g.left = 30; g.paused = false; drawTimer(); } else { toast('金币不够'); timeUp(); } }],
+      ],
+      close:() => modal({title:'放弃这一关？', text:'会扣 1 点体力', actions:[['再拼一会儿', '', () => timeUp()], ['放弃', 'cream', () => { g.over = true; clearInterval(g.tick); S.lives = Math.max(0, S.lives - 1); save(); showHome(); }]]})});
+  }
+  async function finish() {
+    g.over = true; clearInterval(g.tick); clearTut();
+    $('#tools').style.visibility = 'hidden';
+    if (!story) {
+      await wait(300);
+      whole.classList.add('on'); const sw = document.createElement('div'); sw.className = 'sweep'; frame.appendChild(sw);
+      sfx.win(); const [fx, fy, fw, fh] = appXY(frame); burst(fx, fy, 50, {w: fw, h: fh, speed: 2.5, g: .05});
+      await wait(1100);
+      const coinsBefore = S.coins, gain = L.hard ? 30 : 20;
+      const v = modal({title:'拼好了！', star:true, html:`<div class="gains"><span><img class="ico" src="${ic('star')}" alt="">+1</span><span><img class="ico" src="${ic('coin')}" alt=""><b id="gainC">0</b></span></div>`, actions:[['继续', '', () => onWin()]]});
+      countUp(v.querySelector('#gainC'), 0, gain, 700); setTimeout(sfx.coin, 300);
+      return;
+    }
+    // story reveal: cinematic
+    $('#play').classList.add('cine');
+    await wait(500);
+    whole.classList.add('on'); whole.style.zIndex = 1; // hide seams of the solved part; dark tiles stay on top
+    els.forEach((e, i) => { if (locked.has(i)) e.style.zIndex = 3; });
+    sfx.rise(); await wait(900);
+    for (const c of L.dark) {
+      const e = els[c]; e.classList.add('flip3d'); sfx.flip();
+      await wait(400); e.querySelector('.back')?.remove(); e.classList.remove('dark');
+      await wait(450);
+    }
+    els.forEach(e => e.style.clipPath = 'inset(0 round 0)');
+    sfx.hit();
+    // red marker ring around the key tiles
+    const rs = L.dark.map(c => [c % n, Math.floor(c / n)]), x0 = Math.min(...rs.map(r => r[0])) * tw, x1 = (Math.max(...rs.map(r => r[0])) + 1) * tw, y0 = Math.min(...rs.map(r => r[1])) * th, y1 = (Math.max(...rs.map(r => r[1])) + 1) * th;
+    const rx = (x1 - x0) / 2 + 10, ry = (y1 - y0) / 2 + 10, per = Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry))) * 1.1;
+    const ring = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); ring.setAttribute('class', 'ring'); ring.setAttribute('width', W); ring.setAttribute('height', H); ring.style.left = 0; ring.style.top = 0;
+    ring.innerHTML = `<ellipse cx="${(x0 + x1) / 2}" cy="${(y0 + y1) / 2}" rx="${rx}" ry="${ry}" transform="rotate(-6 ${(x0 + x1) / 2} ${(y0 + y1) / 2})" stroke-dasharray="${per}" stroke-dashoffset="${per}"/>`;
+    frame.appendChild(ring); sfx.marker();
+    $('#cap').innerHTML = `<span>${L.capDark}</span>`;
+    await wait(2600);
+    ring.style.transition = 'opacity .4s'; ring.style.opacity = 0;
+    const z = document.createElement('div'); z.className = 'zoom';
+    z.innerHTML = `<img src="${img}" alt="" style="transform:translate(${-cx * W / f}px,${-cy * H / f}px) scale(${1 / f})">`;
+    frame.appendChild(z); await wait(60);
+    $('#cap').innerHTML = ''; sfx.chord(); frame.style.transform = 'rotate(0)';
+    z.firstChild.style.transform = 'none';
+    await wait(3000);
+    frame.dataset.label = L.label;
+    $('#cap').innerHTML = `<span>${L.capZoom}</span>`;
+    await wait(1200);
+    const tools = $('#tools'); tools.style.visibility = 'visible'; $('#play').classList.remove('cine');
+    $('#hintBtn').hidden = true; $('#peekBtn').hidden = true;
+    const b = document.createElement('button'); b.className = 'btn gold'; b.style.maxWidth = '300px'; b.innerHTML = `<img class="bi" src="${ic('board')}" alt="">收入案件板`;
+    b.onclick = async () => { b.remove(); sfx.paper(); frame.classList.add('fly'); await wait(650); onWin(); };
+    tools.appendChild(b);
+  }
+  $('#hintN').textContent = S.hints;
+  drawTimer(); refresh();
+  if (L.tut && !S.tutDone) { S.tutDone = 1; save(); showTut(); }
+}
+$('#hintBtn').onclick = () => {
+  if (!G || G.over || G.paused) return;
+  sfx.tap();
+  if (S.hints > 0) { S.hints--; save(); $('#hintN').textContent = S.hints; return G.hint(); }
+  G.paused = true;
+  modal({title:'放大镜用完了', medal:ic('loupe'), actions:[
+    ['看广告 提示 +1', '', () => fakeAd(() => { G.paused = false; G.hint(); }), ic('photo')],
+    [`<span style="display:flex;align-items:center;gap:6px"><img class="ico" src="${ic('coin')}" alt="">60 提示 +1</span>`, 'gold', () => { G.paused = false; if (S.coins >= 60) { S.coins -= 60; save(); G.hint(); } else toast('金币不够'); }],
+  ], close:() => { G.paused = false; }});
+};
+(() => {
+  const pb = $('#peekBtn'); let pv = null, timer = null;
+  const on = () => { if (!G || G.over || pv) return; pv = document.createElement('div'); pv.className = 'peek'; pv.style.backgroundImage = `url(${G.img})`; pv.style.backgroundSize = G.bgSize; pv.style.backgroundPosition = `${G.bx0}px ${G.by0}px`; $('#frame').appendChild(pv); };
+  const off = () => { clearTimeout(timer); if (pv) { pv.remove(); pv = null; } };
+  pb.onpointerdown = e => { e.preventDefault(); sfx.paper(); on(); clearTimeout(timer); timer = setTimeout(off, 1600); };
+})();
+$('#pauseBtn').onclick = () => {
+  if (!G || G.over) return;
+  G.paused = true; sfx.tap();
+  const story = !!G.L.story;
+  modal({title:'暂停', actions:[
+    ['继续', '', () => { G.paused = false; }],
+    ['直接过关<small>试玩用</small>', 'cream', () => { G.paused = false; G.solve(); }],
+    ...(story ? [] : [['退出这一关<small>扣 1 点体力</small>', 'cream', () => { G.over = true; clearInterval(G.tick); S.lives = Math.max(0, S.lives - 1); save(); showHome(); }]]),
+  ]});
+};
+
+/* ================= boot ================= */
+(() => {
+  SCRIPT = JSON.parse(SCRIPT_JSON);
+  buildFlow(); fxInit();
+  $('#titleImg').src = src('title');
+  const files = [...new Set(Object.values(PIC))].map(f => IMG + f).concat(UIFILES.map(f => UI + f));
+  let done = 0;
+  const btn = $('#startBtn'), bar = $('#loadbar b');
+  const tick = () => { done++; bar.style.width = (done / files.length * 100) + '%'; if (done >= files.length) { $('#loadbar').hidden = true; btn.hidden = false; btn.textContent = hadSave ? '继续调查' : '开始调查'; $('#resetBtn').hidden = !hadSave; } };
+  files.forEach(f => loadImg(f).then(tick));
+  btn.onclick = () => { sfx.tap(); run(); };
+  $('#resetBtn').onclick = () => { S = structuredClone(DEF); save(); for (const k in CACHE) delete CACHE[k]; run(); };
+})();
+</script>
+
+</html>
